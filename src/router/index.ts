@@ -1,0 +1,59 @@
+import { createRouter, createWebHistory } from 'vue-router'
+
+const router = createRouter({
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes: [
+    {
+      path: '/',
+      name: 'home',
+      component: () => import('@/views/HomeView.vue'),
+    },
+    {
+      path: '/owners',
+      name: 'owner-list',
+      component: () => import('@/views/owners/OwnerListView.vue'),
+    },
+    {
+      path: '/owners/new',
+      name: 'owner-create',
+      component: () => import('@/views/owners/OwnerFormView.vue'),
+    },
+    {
+      path: '/owners/:id/edit',
+      name: 'owner-edit',
+      component: () => import('@/views/owners/OwnerFormView.vue'),
+    },
+    {
+      path: '/bank-accounts',
+      name: 'bank-account-list',
+      component: () => import('@/views/bank-accounts/BankAccountListView.vue'),
+    },
+    {
+      path: '/bank-accounts/new',
+      name: 'bank-account-create',
+      component: () => import('@/views/bank-accounts/BankAccountFormView.vue'),
+    },
+    {
+      path: '/bank-accounts/:id/edit',
+      name: 'bank-account-edit',
+      component: () => import('@/views/bank-accounts/BankAccountFormView.vue'),
+    },
+    {
+      path: '/transactions',
+      name: 'transaction-list',
+      component: () => import('@/views/transactions/TransactionListView.vue'),
+    },
+    {
+      path: '/transactions/new',
+      name: 'transaction-create',
+      component: () => import('@/views/transactions/TransactionFormView.vue'),
+    },
+    {
+      path: '/transactions/:id/edit',
+      name: 'transaction-edit',
+      component: () => import('@/views/transactions/TransactionFormView.vue'),
+    },
+  ],
+})
+
+export default router

@@ -1,0 +1,77 @@
+<script setup lang="ts">
+import { ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { useOwnerStore } from '@/stores/owner-store'
+import { useEntityForm } from '@/composables/use-entity-form'
+
+const store = useOwnerStore()
+const router = useRouter()
+const { isEditMode, existing } = useEntityForm((id) => store.getById(id))
+
+const name = ref('')
+
+watch(existing, (entity) => {
+  if (entity) {
+    name.value = entity.name
+  }
+})
+
+function handleSubmit() {
+  if (isEditMode.value && existing.value) {
+    store.update({ ...existing.value, name: name.value })
+  } else {
+    store.create(name.value)
+  }
+  router.push('/owners')
+}
+</script>
+
+<template>
+  <h1>{{ isEditMode ? 'Editar Titular' : 'Novo Titular' }}</h1>
+
+  <form @submit.prevent="handleSubmit">
+    <div class="field">
+      <label for="name">Nome</label>
+      <input id="name" v-model="name" type="text" required />
+    </div>
+    <div class="actions">
+      <button type="submit">Salvar</button>
+      <RouterLink to="/owners">Cancelar</RouterLink>
+    </div>
+  </form>
+</template>
+
+<style scoped>
+.field {
+  margin-bottom: 1rem;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  padding: 0.4rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.actions button {
+  padding: 0.4rem 0.8rem;
+  background: #42b883;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+</style>
