@@ -35,8 +35,10 @@ function handleDelete() {
 </script>
 
 <template>
-  <h1>Contas Bancárias</h1>
-  <RouterLink to="/bank-accounts/new" class="btn">Nova Conta</RouterLink>
+  <div class="page-header">
+    <h1>Contas Bancarias</h1>
+    <RouterLink to="/bank-accounts/new" class="btn">Nova Conta</RouterLink>
+  </div>
 
   <p v-if="store.error" class="error">{{ store.error }}</p>
 
@@ -47,7 +49,7 @@ function handleDelete() {
         <th>Titular</th>
         <th>Saldo Inicial</th>
         <th>Saldo Atual</th>
-        <th>Ações</th>
+        <th>Acoes</th>
       </tr>
     </thead>
     <tbody>
@@ -57,11 +59,17 @@ function handleDelete() {
         <td>{{ formatCurrency(account.initialBalance) }}</td>
         <td>{{ formatCurrency(account.currentBalance) }}</td>
         <td>
-          <RouterLink :to="`/bank-accounts/${account.id}/history`">Historico</RouterLink>
-          <RouterLink :to="`/bank-accounts/${account.id}/edit`">Editar</RouterLink>
-          <button type="button" class="btn-link danger" @click="confirmDelete(account.id)">
-            Excluir
-          </button>
+          <div class="actions">
+            <RouterLink :to="`/bank-accounts/${account.id}/history`" class="btn-link">
+              Historico
+            </RouterLink>
+            <RouterLink :to="`/bank-accounts/${account.id}/edit`" class="btn-link">
+              Editar
+            </RouterLink>
+            <button type="button" class="btn-link danger" @click="confirmDelete(account.id)">
+              Excluir
+            </button>
+          </div>
         </td>
       </tr>
     </tbody>
@@ -70,46 +78,3 @@ function handleDelete() {
 
   <ConfirmDialog ref="confirmDialog" @confirm="handleDelete" />
 </template>
-
-<style scoped>
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
-}
-
-th,
-td {
-  border: 1px solid #ddd;
-  padding: 0.5rem;
-  text-align: left;
-}
-
-.btn {
-  display: inline-block;
-  margin-top: 0.5rem;
-  padding: 0.4rem 0.8rem;
-  background: #42b883;
-  color: white;
-  text-decoration: none;
-  border-radius: 4px;
-}
-
-.btn-link {
-  background: none;
-  border: none;
-  cursor: pointer;
-  text-decoration: underline;
-  padding: 0;
-  margin-left: 0.5rem;
-}
-
-.danger {
-  color: #e74c3c;
-}
-
-.error {
-  color: #e74c3c;
-  margin-top: 0.5rem;
-}
-</style>

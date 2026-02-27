@@ -3,42 +3,42 @@ import { defineStore } from 'pinia'
 import type { Transaction, CreateTransactionInput } from '@/entities'
 import { TransactionUseCases } from '@/usecases'
 import {
-  LocalStorageBankAccountRepository,
-  LocalStorageTransactionRepository,
-} from '@/adapters/repositories'
+  getTransactionRepository,
+  getBankAccountRepository,
+} from '@/adapters/repositories/repository-provider'
 
-const transactionRepo = new LocalStorageTransactionRepository()
-const bankAccountRepo = new LocalStorageBankAccountRepository()
-const useCases = new TransactionUseCases(transactionRepo, bankAccountRepo)
+function createUseCases() {
+  return new TransactionUseCases(getTransactionRepository(), getBankAccountRepository())
+}
 
 export const useTransactionStore = defineStore('transaction', () => {
   const transactions = ref<Transaction[]>([])
   const error = ref<string | null>(null)
 
   function loadAll() {
-    transactions.value = useCases.getAll()
+    transactions.value = createUseCases().getAll()
   }
 
   function getById(id: string): Transaction | undefined {
-    return useCases.getById(id)
+    return createUseCases().getById(id)
   }
 
   function create(input: CreateTransactionInput): boolean {
-    const result = useCases.create(input)
+    const result = createUseCases().create(input)
     error.value = result.error ?? null
     if (result.success) loadAll()
     return result.success
   }
 
   function update(transaction: Transaction): boolean {
-    const result = useCases.update(transaction)
+    const result = createUseCases().update(transaction)
     error.value = result.error ?? null
     if (result.success) loadAll()
     return result.success
   }
 
   function remove(id: string): boolean {
-    const result = useCases.delete(id)
+    const result = createUseCases().delete(id)
     error.value = result.error ?? null
     if (result.success) loadAll()
     return result.success

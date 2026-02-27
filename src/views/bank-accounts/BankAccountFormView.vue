@@ -50,11 +50,11 @@ function handleSubmit() {
   <p v-if="store.error" class="error">{{ store.error }}</p>
 
   <form @submit.prevent="handleSubmit">
-    <div class="field">
+    <div class="form-group">
       <label for="name">Nome</label>
       <input id="name" v-model="name" type="text" required />
     </div>
-    <div class="field">
+    <div class="form-group">
       <label for="initialBalance">Saldo Inicial</label>
       <input
         id="initialBalance"
@@ -64,7 +64,7 @@ function handleSubmit() {
         required
       />
     </div>
-    <div v-if="isEditMode" class="field">
+    <div v-if="isEditMode" class="form-group">
       <label for="currentBalance">Saldo Atual</label>
       <input
         id="currentBalance"
@@ -74,7 +74,7 @@ function handleSubmit() {
         required
       />
     </div>
-    <div class="field">
+    <div class="form-group">
       <label for="ownerId">Titular</label>
       <select id="ownerId" v-model="ownerId" required>
         <option value="" disabled>Selecione um titular</option>
@@ -83,49 +83,17 @@ function handleSubmit() {
         </option>
       </select>
     </div>
-    <div class="actions">
-      <button type="submit">Salvar</button>
-      <RouterLink to="/bank-accounts">Cancelar</RouterLink>
+    <div class="form-actions">
+      <button type="submit" class="btn">Salvar</button>
+      <RouterLink to="/bank-accounts" class="btn btn-secondary">Cancelar</RouterLink>
     </div>
   </form>
 </template>
 
 <style scoped>
-.field {
-  margin-bottom: 1rem;
-}
-
-.field label {
-  display: block;
-  margin-bottom: 0.25rem;
-  font-weight: 500;
-}
-
-.field input,
-.field select {
-  width: 100%;
-  padding: 0.4rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.actions {
+.form-actions {
   display: flex;
   gap: 0.5rem;
-  margin-top: 1rem;
-}
-
-.actions button {
-  padding: 0.4rem 0.8rem;
-  background: #42b883;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.error {
-  color: #e74c3c;
-  margin-top: 0.5rem;
+  margin-top: 1.5rem;
 }
 </style>

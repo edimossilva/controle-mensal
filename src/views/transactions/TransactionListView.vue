@@ -40,8 +40,10 @@ function handleDelete() {
 </script>
 
 <template>
-  <h1>Transações</h1>
-  <RouterLink to="/transactions/new" class="btn">Nova Transação</RouterLink>
+  <div class="page-header">
+    <h1>Transacoes</h1>
+    <RouterLink to="/transactions/new" class="btn">Nova Transacao</RouterLink>
+  </div>
 
   <p v-if="store.error" class="error">{{ store.error }}</p>
 
@@ -53,7 +55,7 @@ function handleDelete() {
         <th>Origem</th>
         <th>Destino</th>
         <th>Data</th>
-        <th>Ações</th>
+        <th>Acoes</th>
       </tr>
     </thead>
     <tbody>
@@ -64,58 +66,19 @@ function handleDelete() {
         <td>{{ accountName(transaction.destinationAccountId) }}</td>
         <td>{{ formatDate(transaction.date) }}</td>
         <td>
-          <RouterLink :to="`/transactions/${transaction.id}/edit`">Editar</RouterLink>
-          <button type="button" class="btn-link danger" @click="confirmDelete(transaction.id)">
-            Excluir
-          </button>
+          <div class="actions">
+            <RouterLink :to="`/transactions/${transaction.id}/edit`" class="btn-link">
+              Editar
+            </RouterLink>
+            <button type="button" class="btn-link danger" @click="confirmDelete(transaction.id)">
+              Excluir
+            </button>
+          </div>
         </td>
       </tr>
     </tbody>
   </table>
-  <p v-else>Nenhuma transação cadastrada.</p>
+  <p v-else>Nenhuma transacao cadastrada.</p>
 
   <ConfirmDialog ref="confirmDialog" @confirm="handleDelete" />
 </template>
-
-<style scoped>
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
-}
-
-th,
-td {
-  border: 1px solid #ddd;
-  padding: 0.5rem;
-  text-align: left;
-}
-
-.btn {
-  display: inline-block;
-  margin-top: 0.5rem;
-  padding: 0.4rem 0.8rem;
-  background: #42b883;
-  color: white;
-  text-decoration: none;
-  border-radius: 4px;
-}
-
-.btn-link {
-  background: none;
-  border: none;
-  cursor: pointer;
-  text-decoration: underline;
-  padding: 0;
-  margin-left: 0.5rem;
-}
-
-.danger {
-  color: #e74c3c;
-}
-
-.error {
-  color: #e74c3c;
-  margin-top: 0.5rem;
-}
-</style>

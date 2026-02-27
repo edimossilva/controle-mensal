@@ -26,7 +26,7 @@ onMounted(() => {
 
 <template>
   <h1>Controle Mensal</h1>
-  <div class="summary">
+  <div class="card-grid">
     <div class="card">
       <h2>{{ ownerStore.owners.length }}</h2>
       <p>Titulares</p>
@@ -37,7 +37,7 @@ onMounted(() => {
     </div>
     <div class="card">
       <h2>{{ transactionStore.transactions.length }}</h2>
-      <p>Transações</p>
+      <p>Transacoes</p>
     </div>
     <div class="card">
       <h2>{{ categoryStore.categories.length }}</h2>
@@ -53,31 +53,3 @@ onMounted(() => {
     </div>
   </div>
 </template>
-
-<style scoped>
-.summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.5rem;
-  margin-top: 1.5rem;
-}
-
-.card {
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 1.5rem;
-  text-align: center;
-  min-width: 150px;
-}
-
-.card h2 {
-  margin: 0;
-  font-size: 2rem;
-  color: #42b883;
-}
-
-.card p {
-  margin: 0.5rem 0 0;
-  color: #666;
-}
-</style>

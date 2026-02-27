@@ -92,7 +92,7 @@ function handleSubmit() {
   <p v-if="store.error" class="error">{{ store.error }}</p>
 
   <form @submit.prevent="handleSubmit">
-    <div class="field">
+    <div class="form-group">
       <label for="templateId">Modelo</label>
       <select id="templateId" v-model="templateId" required>
         <option value="" disabled>Selecione um modelo</option>
@@ -101,7 +101,7 @@ function handleSubmit() {
         </option>
       </select>
     </div>
-    <div class="field">
+    <div class="form-group">
       <label for="ownerId">Titular</label>
       <select id="ownerId" v-model="ownerId" required>
         <option value="" disabled>Selecione um titular</option>
@@ -110,7 +110,7 @@ function handleSubmit() {
         </option>
       </select>
     </div>
-    <div class="field">
+    <div class="form-group">
       <label for="bankAccountId">Conta Bancaria</label>
       <select id="bankAccountId" v-model="bankAccountId" required>
         <option value="" disabled>Selecione uma conta</option>
@@ -119,19 +119,19 @@ function handleSubmit() {
         </option>
       </select>
     </div>
-    <div class="field">
+    <div class="form-group">
       <label for="value">Valor</label>
       <input id="value" v-model.number="value" type="number" step="0.01" min="0.01" required />
     </div>
-    <div class="field">
+    <div class="form-group">
       <label for="paymentDate">Data de Pagamento</label>
       <input id="paymentDate" v-model="paymentDate" type="date" required />
     </div>
-    <div class="field">
+    <div class="form-group">
       <label for="dueDateDay">Dia de Vencimento</label>
       <input id="dueDateDay" v-model.number="dueDateDay" type="number" min="1" max="31" />
     </div>
-    <div class="field">
+    <div class="form-group">
       <label for="status">Status</label>
       <select id="status" v-model="status" required>
         <option value="pending">Pendente</option>
@@ -139,53 +139,21 @@ function handleSubmit() {
         <option value="skipped">Ignorado</option>
       </select>
     </div>
-    <div class="field">
+    <div class="form-group">
       <label for="notes">Observacoes</label>
       <input id="notes" v-model="notes" type="text" />
     </div>
-    <div class="actions">
-      <button type="submit">Salvar</button>
-      <RouterLink to="/payments">Cancelar</RouterLink>
+    <div class="form-actions">
+      <button type="submit" class="btn">Salvar</button>
+      <RouterLink to="/payments" class="btn btn-secondary">Cancelar</RouterLink>
     </div>
   </form>
 </template>
 
 <style scoped>
-.field {
-  margin-bottom: 1rem;
-}
-
-.field label {
-  display: block;
-  margin-bottom: 0.25rem;
-  font-weight: 500;
-}
-
-.field input,
-.field select {
-  width: 100%;
-  padding: 0.4rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.actions {
+.form-actions {
   display: flex;
   gap: 0.5rem;
-  margin-top: 1rem;
-}
-
-.actions button {
-  padding: 0.4rem 0.8rem;
-  background: #42b883;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.error {
-  color: #e74c3c;
-  margin-top: 0.5rem;
+  margin-top: 1.5rem;
 }
 </style>

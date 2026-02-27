@@ -3,44 +3,47 @@ import { defineStore } from 'pinia'
 import type { BankAccount } from '@/entities'
 import { BankAccountUseCases } from '@/usecases'
 import {
-  LocalStorageOwnerRepository,
-  LocalStorageBankAccountRepository,
-  LocalStorageTransactionRepository,
-  LocalStoragePaymentRepository,
-} from '@/adapters/repositories'
+  getBankAccountRepository,
+  getOwnerRepository,
+  getTransactionRepository,
+  getPaymentRepository,
+} from '@/adapters/repositories/repository-provider'
 
-const bankAccountRepo = new LocalStorageBankAccountRepository()
-const ownerRepo = new LocalStorageOwnerRepository()
-const transactionRepo = new LocalStorageTransactionRepository()
-const paymentRepo = new LocalStoragePaymentRepository()
-const useCases = new BankAccountUseCases(bankAccountRepo, ownerRepo, transactionRepo, paymentRepo)
+function createUseCases() {
+  return new BankAccountUseCases(
+    getBankAccountRepository(),
+    getOwnerRepository(),
+    getTransactionRepository(),
+    getPaymentRepository(),
+  )
+}
 
 export const useBankAccountStore = defineStore('bank-account', () => {
   const accounts = ref<BankAccount[]>([])
   const error = ref<string | null>(null)
 
   function loadAll() {
-    accounts.value = useCases.getAll()
+    accounts.value = createUseCases().getAll()
   }
 
   function getById(id: string): BankAccount | undefined {
-    return useCases.getById(id)
+    return createUseCases().getById(id)
   }
 
   function create(name: string, initialBalance: number, ownerId: string): boolean {
-    const result = useCases.create(name, initialBalance, ownerId)
+    const result = createUseCases().create(name, initialBalance, ownerId)
     error.value = result.error ?? null
     if (result.success) loadAll()
     return result.success
   }
 
   function update(account: BankAccount) {
-    useCases.update(account)
+    createUseCases().update(account)
     loadAll()
   }
 
   function remove(id: string): boolean {
-    const result = useCases.delete(id)
+    const result = createUseCases().delete(id)
     error.value = result.error ?? null
     if (result.success) loadAll()
     return result.success

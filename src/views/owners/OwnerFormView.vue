@@ -30,48 +30,21 @@ function handleSubmit() {
   <h1>{{ isEditMode ? 'Editar Titular' : 'Novo Titular' }}</h1>
 
   <form @submit.prevent="handleSubmit">
-    <div class="field">
+    <div class="form-group">
       <label for="name">Nome</label>
       <input id="name" v-model="name" type="text" required />
     </div>
-    <div class="actions">
-      <button type="submit">Salvar</button>
-      <RouterLink to="/owners">Cancelar</RouterLink>
+    <div class="form-actions">
+      <button type="submit" class="btn">Salvar</button>
+      <RouterLink to="/owners" class="btn btn-secondary">Cancelar</RouterLink>
     </div>
   </form>
 </template>
 
 <style scoped>
-.field {
-  margin-bottom: 1rem;
-}
-
-.field label {
-  display: block;
-  margin-bottom: 0.25rem;
-  font-weight: 500;
-}
-
-.field input,
-.field select {
-  width: 100%;
-  padding: 0.4rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.actions {
+.form-actions {
   display: flex;
   gap: 0.5rem;
-  margin-top: 1rem;
-}
-
-.actions button {
-  padding: 0.4rem 0.8rem;
-  background: #42b883;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+  margin-top: 1.5rem;
 }
 </style>

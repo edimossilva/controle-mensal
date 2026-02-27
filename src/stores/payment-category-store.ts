@@ -3,38 +3,38 @@ import { defineStore } from 'pinia'
 import type { PaymentCategory } from '@/entities'
 import { PaymentCategoryUseCases } from '@/usecases'
 import {
-  LocalStoragePaymentCategoryRepository,
-  LocalStoragePaymentTemplateRepository,
-} from '@/adapters/repositories'
+  getPaymentCategoryRepository,
+  getPaymentTemplateRepository,
+} from '@/adapters/repositories/repository-provider'
 
-const categoryRepo = new LocalStoragePaymentCategoryRepository()
-const templateRepo = new LocalStoragePaymentTemplateRepository()
-const useCases = new PaymentCategoryUseCases(categoryRepo, templateRepo)
+function createUseCases() {
+  return new PaymentCategoryUseCases(getPaymentCategoryRepository(), getPaymentTemplateRepository())
+}
 
 export const usePaymentCategoryStore = defineStore('payment-category', () => {
   const categories = ref<PaymentCategory[]>([])
   const error = ref<string | null>(null)
 
   function loadAll() {
-    categories.value = useCases.getAll()
+    categories.value = createUseCases().getAll()
   }
 
   function getById(id: string): PaymentCategory | undefined {
-    return useCases.getById(id)
+    return createUseCases().getById(id)
   }
 
   function create(name: string, color: string, description?: string) {
-    useCases.create(name, color, description)
+    createUseCases().create(name, color, description)
     loadAll()
   }
 
   function update(category: PaymentCategory) {
-    useCases.update(category)
+    createUseCases().update(category)
     loadAll()
   }
 
   function remove(id: string): boolean {
-    const result = useCases.delete(id)
+    const result = createUseCases().delete(id)
     error.value = result.error ?? null
     if (result.success) loadAll()
     return result.success

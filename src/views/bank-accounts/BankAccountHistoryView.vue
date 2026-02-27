@@ -40,8 +40,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <h1>Historico — {{ account?.name ?? 'Conta' }}</h1>
-  <RouterLink to="/bank-accounts" class="btn">Voltar</RouterLink>
+  <div class="page-header">
+    <h1>Historico — {{ account?.name ?? 'Conta' }}</h1>
+    <RouterLink to="/bank-accounts" class="btn btn-secondary">Voltar</RouterLink>
+  </div>
 
   <table v-if="store.entries.length">
     <thead>
@@ -67,36 +69,3 @@ onMounted(() => {
   </table>
   <p v-else>Nenhum registro encontrado.</p>
 </template>
-
-<style scoped>
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
-}
-
-th,
-td {
-  border: 1px solid #ddd;
-  padding: 0.5rem;
-  text-align: left;
-}
-
-.btn {
-  display: inline-block;
-  margin-top: 0.5rem;
-  padding: 0.4rem 0.8rem;
-  background: #42b883;
-  color: white;
-  text-decoration: none;
-  border-radius: 4px;
-}
-
-.positive {
-  color: #27ae60;
-}
-
-.negative {
-  color: #e74c3c;
-}
-</style>

@@ -42,8 +42,10 @@ function handleDelete() {
 </script>
 
 <template>
-  <h1>Modelos de Pagamento</h1>
-  <RouterLink to="/payment-templates/new" class="btn">Novo Modelo</RouterLink>
+  <div class="page-header">
+    <h1>Modelos de Pagamento</h1>
+    <RouterLink to="/payment-templates/new" class="btn">Novo Modelo</RouterLink>
+  </div>
 
   <p v-if="store.error" class="error">{{ store.error }}</p>
 
@@ -64,10 +66,14 @@ function handleDelete() {
         <td>{{ ownerName(template.ownerId) }}</td>
         <td>{{ formatCurrency(template.value) }}</td>
         <td>
-          <RouterLink :to="`/payment-templates/${template.id}/edit`">Editar</RouterLink>
-          <button type="button" class="btn-link danger" @click="confirmDelete(template.id)">
-            Excluir
-          </button>
+          <div class="actions">
+            <RouterLink :to="`/payment-templates/${template.id}/edit`" class="btn-link">
+              Editar
+            </RouterLink>
+            <button type="button" class="btn-link danger" @click="confirmDelete(template.id)">
+              Excluir
+            </button>
+          </div>
         </td>
       </tr>
     </tbody>
@@ -76,46 +82,3 @@ function handleDelete() {
 
   <ConfirmDialog ref="confirmDialog" @confirm="handleDelete" />
 </template>
-
-<style scoped>
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
-}
-
-th,
-td {
-  border: 1px solid #ddd;
-  padding: 0.5rem;
-  text-align: left;
-}
-
-.btn {
-  display: inline-block;
-  margin-top: 0.5rem;
-  padding: 0.4rem 0.8rem;
-  background: #42b883;
-  color: white;
-  text-decoration: none;
-  border-radius: 4px;
-}
-
-.btn-link {
-  background: none;
-  border: none;
-  cursor: pointer;
-  text-decoration: underline;
-  padding: 0;
-  margin-left: 0.5rem;
-}
-
-.danger {
-  color: #e74c3c;
-}
-
-.error {
-  color: #e74c3c;
-  margin-top: 0.5rem;
-}
-</style>

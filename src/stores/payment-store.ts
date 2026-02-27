@@ -3,46 +3,49 @@ import { defineStore } from 'pinia'
 import type { Payment, CreatePaymentInput } from '@/entities'
 import { PaymentUseCases } from '@/usecases'
 import {
-  LocalStoragePaymentRepository,
-  LocalStoragePaymentTemplateRepository,
-  LocalStorageBankAccountRepository,
-  LocalStorageOwnerRepository,
-} from '@/adapters/repositories'
+  getPaymentRepository,
+  getPaymentTemplateRepository,
+  getBankAccountRepository,
+  getOwnerRepository,
+} from '@/adapters/repositories/repository-provider'
 
-const paymentRepo = new LocalStoragePaymentRepository()
-const templateRepo = new LocalStoragePaymentTemplateRepository()
-const bankAccountRepo = new LocalStorageBankAccountRepository()
-const ownerRepo = new LocalStorageOwnerRepository()
-const useCases = new PaymentUseCases(paymentRepo, templateRepo, bankAccountRepo, ownerRepo)
+function createUseCases() {
+  return new PaymentUseCases(
+    getPaymentRepository(),
+    getPaymentTemplateRepository(),
+    getBankAccountRepository(),
+    getOwnerRepository(),
+  )
+}
 
 export const usePaymentStore = defineStore('payment', () => {
   const payments = ref<Payment[]>([])
   const error = ref<string | null>(null)
 
   function loadAll() {
-    payments.value = useCases.getAll()
+    payments.value = createUseCases().getAll()
   }
 
   function getById(id: string): Payment | undefined {
-    return useCases.getById(id)
+    return createUseCases().getById(id)
   }
 
   function create(input: CreatePaymentInput): boolean {
-    const result = useCases.create(input)
+    const result = createUseCases().create(input)
     error.value = result.error ?? null
     if (result.success) loadAll()
     return result.success
   }
 
   function update(payment: Payment): boolean {
-    const result = useCases.update(payment)
+    const result = createUseCases().update(payment)
     error.value = result.error ?? null
     if (result.success) loadAll()
     return result.success
   }
 
   function remove(id: string): boolean {
-    const result = useCases.delete(id)
+    const result = createUseCases().delete(id)
     error.value = result.error ?? null
     if (result.success) loadAll()
     return result.success
