@@ -1,6 +1,11 @@
 import type { BankAccount } from '@/entities'
 import { createBankAccount } from '@/entities'
-import type { OwnerRepository, BankAccountRepository, TransactionRepository } from './ports'
+import type {
+  OwnerRepository,
+  BankAccountRepository,
+  TransactionRepository,
+  PaymentRepository,
+} from './ports'
 
 export interface UseCaseResult {
   success: boolean
@@ -12,6 +17,7 @@ export class BankAccountUseCases {
     private bankAccountRepo: BankAccountRepository,
     private ownerRepo: OwnerRepository,
     private transactionRepo: TransactionRepository,
+    private paymentRepo: PaymentRepository,
   ) {}
 
   getAll(): BankAccount[] {
@@ -51,6 +57,13 @@ export class BankAccountUseCases {
       return {
         success: false,
         error: 'Não é possível excluir a conta pois existem transações vinculadas.',
+      }
+    }
+    const payments = this.paymentRepo.getByBankAccountId(id)
+    if (payments.length > 0) {
+      return {
+        success: false,
+        error: 'Nao e possivel excluir a conta pois existem pagamentos vinculados.',
       }
     }
     this.bankAccountRepo.delete(id)

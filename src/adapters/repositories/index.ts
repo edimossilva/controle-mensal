@@ -1,3 +1,6 @@
 export { LocalStorageOwnerRepository } from './owner-repository'
 export { LocalStorageBankAccountRepository } from './bank-account-repository'
 export { LocalStorageTransactionRepository } from './transaction-repository'
+export { LocalStoragePaymentCategoryRepository } from './payment-category-repository'
+export { LocalStoragePaymentTemplateRepository } from './payment-template-repository'
+export { LocalStoragePaymentRepository } from './payment-repository'

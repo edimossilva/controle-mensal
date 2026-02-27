@@ -5,11 +5,15 @@ import { OwnerUseCases } from '@/usecases'
 import {
   LocalStorageOwnerRepository,
   LocalStorageBankAccountRepository,
+  LocalStoragePaymentTemplateRepository,
+  LocalStoragePaymentRepository,
 } from '@/adapters/repositories'
 
 const ownerRepo = new LocalStorageOwnerRepository()
 const bankAccountRepo = new LocalStorageBankAccountRepository()
-const useCases = new OwnerUseCases(ownerRepo, bankAccountRepo)
+const paymentTemplateRepo = new LocalStoragePaymentTemplateRepository()
+const paymentRepo = new LocalStoragePaymentRepository()
+const useCases = new OwnerUseCases(ownerRepo, bankAccountRepo, paymentTemplateRepo, paymentRepo)
 
 export const useOwnerStore = defineStore('owner', () => {
   const owners = ref<Owner[]>([])

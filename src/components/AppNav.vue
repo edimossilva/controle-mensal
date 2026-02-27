@@ -8,6 +8,9 @@ import { RouterLink } from 'vue-router'
     <RouterLink to="/owners">Titulares</RouterLink>
     <RouterLink to="/bank-accounts">Contas</RouterLink>
     <RouterLink to="/transactions">Transações</RouterLink>
+    <RouterLink to="/payment-categories">Categorias</RouterLink>
+    <RouterLink to="/payment-templates">Modelos</RouterLink>
+    <RouterLink to="/payments">Pagamentos</RouterLink>
   </nav>
 </template>
 

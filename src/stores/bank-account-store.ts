@@ -6,12 +6,14 @@ import {
   LocalStorageOwnerRepository,
   LocalStorageBankAccountRepository,
   LocalStorageTransactionRepository,
+  LocalStoragePaymentRepository,
 } from '@/adapters/repositories'
 
 const bankAccountRepo = new LocalStorageBankAccountRepository()
 const ownerRepo = new LocalStorageOwnerRepository()
 const transactionRepo = new LocalStorageTransactionRepository()
-const useCases = new BankAccountUseCases(bankAccountRepo, ownerRepo, transactionRepo)
+const paymentRepo = new LocalStoragePaymentRepository()
+const useCases = new BankAccountUseCases(bankAccountRepo, ownerRepo, transactionRepo, paymentRepo)
 
 export const useBankAccountStore = defineStore('bank-account', () => {
   const accounts = ref<BankAccount[]>([])

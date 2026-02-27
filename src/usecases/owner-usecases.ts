@@ -1,6 +1,11 @@
 import type { Owner } from '@/entities'
 import { createOwner } from '@/entities'
-import type { OwnerRepository, BankAccountRepository } from './ports'
+import type {
+  OwnerRepository,
+  BankAccountRepository,
+  PaymentTemplateRepository,
+  PaymentRepository,
+} from './ports'
 
 export interface UseCaseResult {
   success: boolean
@@ -11,6 +16,8 @@ export class OwnerUseCases {
   constructor(
     private ownerRepo: OwnerRepository,
     private bankAccountRepo: BankAccountRepository,
+    private paymentTemplateRepo: PaymentTemplateRepository,
+    private paymentRepo: PaymentRepository,
   ) {}
 
   getAll(): Owner[] {
@@ -37,6 +44,20 @@ export class OwnerUseCases {
       return {
         success: false,
         error: 'Não é possível excluir o titular pois existem contas vinculadas.',
+      }
+    }
+    const templates = this.paymentTemplateRepo.getByOwnerId(id)
+    if (templates.length > 0) {
+      return {
+        success: false,
+        error: 'Nao e possivel excluir o titular pois existem modelos de pagamento vinculados.',
+      }
+    }
+    const payments = this.paymentRepo.getByOwnerId(id)
+    if (payments.length > 0) {
+      return {
+        success: false,
+        error: 'Nao e possivel excluir o titular pois existem pagamentos vinculados.',
       }
     }
     this.ownerRepo.delete(id)
