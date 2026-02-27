@@ -39,6 +39,11 @@ const router = createRouter({
       component: () => import('@/views/bank-accounts/BankAccountFormView.vue'),
     },
     {
+      path: '/bank-accounts/:id/history',
+      name: 'bank-account-history',
+      component: () => import('@/views/bank-accounts/BankAccountHistoryView.vue'),
+    },
+    {
       path: '/transactions',
       name: 'transaction-list',
       component: () => import('@/views/transactions/TransactionListView.vue'),

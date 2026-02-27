@@ -57,6 +57,7 @@ function handleDelete() {
         <td>{{ formatCurrency(account.initialBalance) }}</td>
         <td>{{ formatCurrency(account.currentBalance) }}</td>
         <td>
+          <RouterLink :to="`/bank-accounts/${account.id}/history`">Historico</RouterLink>
           <RouterLink :to="`/bank-accounts/${account.id}/edit`">Editar</RouterLink>
           <button type="button" class="btn-link danger" @click="confirmDelete(account.id)">
             Excluir
