@@ -26,6 +26,7 @@ export class BankAccountHistoryUseCases {
         type: 'transaction' as const,
         description: transaction.name,
         amount: isOrigin ? -transaction.amount : transaction.amount,
+        targetAccountId: isOrigin ? transaction.destinationAccountId : transaction.originAccountId,
       }
     })
   }

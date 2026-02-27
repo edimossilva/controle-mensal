@@ -28,6 +28,11 @@ function formatDate(date: Date): string {
   return date.toLocaleDateString('pt-BR')
 }
 
+function accountName(accountId?: string): string {
+  if (!accountId) return '-'
+  return bankAccountStore.getById(accountId)?.name ?? 'Desconhecida'
+}
+
 onMounted(() => {
   bankAccountStore.loadAll()
   store.loadByAccountId(accountId)
@@ -44,6 +49,7 @@ onMounted(() => {
         <th>Data</th>
         <th>Tipo</th>
         <th>Descricao</th>
+        <th>Conta Destino</th>
         <th>Efeito</th>
       </tr>
     </thead>
@@ -52,6 +58,7 @@ onMounted(() => {
         <td>{{ formatDate(entry.date) }}</td>
         <td>{{ typeLabel(entry.type) }}</td>
         <td>{{ entry.description }}</td>
+        <td>{{ accountName(entry.targetAccountId) }}</td>
         <td :class="entry.amount >= 0 ? 'positive' : 'negative'">
           {{ formatCurrency(entry.amount) }}
         </td>

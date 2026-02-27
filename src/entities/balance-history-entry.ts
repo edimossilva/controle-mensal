@@ -6,4 +6,5 @@ export interface BalanceHistoryEntry {
   type: BalanceHistoryEntryType
   description: string
   amount: number
+  targetAccountId?: string
 }
