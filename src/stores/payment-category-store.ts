@@ -5,10 +5,15 @@ import { PaymentCategoryUseCases } from '@/usecases'
 import {
   getPaymentCategoryRepository,
   getPaymentTemplateRepository,
+  getPaymentRepository,
 } from '@/adapters/repositories/repository-provider'
 
 function createUseCases() {
-  return new PaymentCategoryUseCases(getPaymentCategoryRepository(), getPaymentTemplateRepository())
+  return new PaymentCategoryUseCases(
+    getPaymentCategoryRepository(),
+    getPaymentTemplateRepository(),
+    getPaymentRepository(),
+  )
 }
 
 export const usePaymentCategoryStore = defineStore('payment-category', () => {

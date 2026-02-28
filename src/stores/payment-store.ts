@@ -7,6 +7,7 @@ import {
   getPaymentTemplateRepository,
   getBankAccountRepository,
   getOwnerRepository,
+  getPaymentCategoryRepository,
 } from '@/adapters/repositories/repository-provider'
 
 function createUseCases() {
@@ -15,6 +16,7 @@ function createUseCases() {
     getPaymentTemplateRepository(),
     getBankAccountRepository(),
     getOwnerRepository(),
+    getPaymentCategoryRepository(),
   )
 }
 

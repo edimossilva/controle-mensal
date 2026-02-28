@@ -5,6 +5,7 @@ import { usePaymentStore } from '@/stores/payment-store'
 import { usePaymentTemplateStore } from '@/stores/payment-template-store'
 import { useBankAccountStore } from '@/stores/bank-account-store'
 import { useOwnerStore } from '@/stores/owner-store'
+import { usePaymentCategoryStore } from '@/stores/payment-category-store'
 import { useEntityForm } from '@/composables/use-entity-form'
 import type { PaymentStatus } from '@/entities'
 
@@ -12,6 +13,7 @@ const store = usePaymentStore()
 const templateStore = usePaymentTemplateStore()
 const bankAccountStore = useBankAccountStore()
 const ownerStore = useOwnerStore()
+const categoryStore = usePaymentCategoryStore()
 const router = useRouter()
 const { isEditMode, existing } = useEntityForm((id) => store.getById(id))
 
@@ -22,12 +24,14 @@ const value = ref(0)
 const status = ref<PaymentStatus>('pending')
 const bankAccountId = ref('')
 const ownerId = ref('')
+const categoryId = ref('')
 const notes = ref('')
 
 onMounted(() => {
   templateStore.loadAll()
   bankAccountStore.loadAll()
   ownerStore.loadAll()
+  categoryStore.loadAll()
 })
 
 watch(templateId, (id) => {
@@ -37,6 +41,7 @@ watch(templateId, (id) => {
   value.value = template.value
   dueDateDay.value = template.dueDateDay
   ownerId.value = template.ownerId
+  categoryId.value = template.categoryId
 })
 
 watch(existing, (entity) => {
@@ -48,6 +53,7 @@ watch(existing, (entity) => {
     status.value = entity.status
     bankAccountId.value = entity.bankAccountId
     ownerId.value = entity.ownerId
+    categoryId.value = entity.categoryId
     notes.value = entity.notes ?? ''
   }
 })
@@ -65,6 +71,7 @@ function handleSubmit() {
       status: status.value,
       bankAccountId: bankAccountId.value,
       ownerId: ownerId.value,
+      categoryId: categoryId.value,
       notes: notes.value || undefined,
     })
   } else {
@@ -76,6 +83,7 @@ function handleSubmit() {
       status: status.value,
       bankAccountId: bankAccountId.value,
       ownerId: ownerId.value,
+      categoryId: categoryId.value,
       notes: notes.value || undefined,
     })
   }
@@ -98,6 +106,15 @@ function handleSubmit() {
         <option value="" disabled>Selecione um modelo</option>
         <option v-for="t in templateStore.templates" :key="t.id" :value="t.id">
           {{ t.name }}
+        </option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="categoryId">Categoria</label>
+      <select id="categoryId" v-model="categoryId" required>
+        <option value="" disabled>Selecione uma categoria</option>
+        <option v-for="cat in categoryStore.categories" :key="cat.id" :value="cat.id">
+          {{ cat.name }}
         </option>
       </select>
     </div>

@@ -9,6 +9,7 @@ export interface Payment {
   status: PaymentStatus
   bankAccountId: string
   ownerId: string
+  categoryId: string
   notes?: string
   createdAt: Date
   updatedAt: Date
@@ -22,6 +23,7 @@ export interface CreatePaymentInput {
   status?: PaymentStatus
   bankAccountId: string
   ownerId: string
+  categoryId: string
   notes?: string
 }
 

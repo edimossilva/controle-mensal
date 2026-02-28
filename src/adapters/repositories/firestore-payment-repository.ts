@@ -13,6 +13,7 @@ function serialize(payment: Payment): DocumentData {
     status: payment.status,
     bankAccountId: payment.bankAccountId,
     ownerId: payment.ownerId,
+    categoryId: payment.categoryId,
     notes: payment.notes ?? null,
     createdAt: Timestamp.fromDate(payment.createdAt),
     updatedAt: Timestamp.fromDate(payment.updatedAt),
@@ -29,6 +30,7 @@ function deserialize(data: DocumentData): Payment {
     status: data.status as PaymentStatus,
     bankAccountId: data.bankAccountId as string,
     ownerId: data.ownerId as string,
+    categoryId: (data.categoryId as string) ?? '',
     notes: (data.notes as string) ?? undefined,
     createdAt: (data.createdAt as Timestamp).toDate(),
     updatedAt: (data.updatedAt as Timestamp).toDate(),
@@ -53,5 +55,9 @@ export class FirestorePaymentRepository
 
   getByOwnerId(ownerId: string): Payment[] {
     return this.getAll().filter((p) => p.ownerId === ownerId)
+  }
+
+  getByCategoryId(categoryId: string): Payment[] {
+    return this.getAll().filter((p) => p.categoryId === categoryId)
   }
 }

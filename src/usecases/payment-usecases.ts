@@ -5,6 +5,7 @@ import type {
   PaymentTemplateRepository,
   BankAccountRepository,
   OwnerRepository,
+  PaymentCategoryRepository,
 } from './ports'
 
 export interface UseCaseResult {
@@ -18,6 +19,7 @@ export class PaymentUseCases {
     private templateRepo: PaymentTemplateRepository,
     private bankAccountRepo: BankAccountRepository,
     private ownerRepo: OwnerRepository,
+    private categoryRepo: PaymentCategoryRepository,
   ) {}
 
   getAll(): Payment[] {
@@ -41,6 +43,10 @@ export class PaymentUseCases {
     if (!owner) {
       return { success: false, error: 'Titular nao encontrado.' }
     }
+    const category = this.categoryRepo.getById(input.categoryId)
+    if (!category) {
+      return { success: false, error: 'Categoria nao encontrada.' }
+    }
     const payment = createPayment(input)
     this.paymentRepo.create(payment)
     this.applyBalanceEffect(payment)
@@ -51,6 +57,10 @@ export class PaymentUseCases {
     const existing = this.paymentRepo.getById(updated.id)
     if (!existing) {
       return { success: false, error: 'Pagamento nao encontrado.' }
+    }
+    const category = this.categoryRepo.getById(updated.categoryId)
+    if (!category) {
+      return { success: false, error: 'Categoria nao encontrada.' }
     }
     this.reverseBalanceEffect(existing)
     updated.updatedAt = new Date()
@@ -103,6 +113,7 @@ export class PaymentUseCases {
         status: 'pending',
         bankAccountId,
         ownerId: template.ownerId,
+        categoryId: template.categoryId,
       })
       this.paymentRepo.create(payment)
       created++

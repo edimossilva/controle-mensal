@@ -4,6 +4,7 @@ import { usePaymentStore } from '@/stores/payment-store'
 import { usePaymentTemplateStore } from '@/stores/payment-template-store'
 import { useBankAccountStore } from '@/stores/bank-account-store'
 import { useOwnerStore } from '@/stores/owner-store'
+import { usePaymentCategoryStore } from '@/stores/payment-category-store'
 import { useSortable } from '@/composables/use-sortable'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import type { PaymentStatus } from '@/entities/payment'
@@ -12,6 +13,7 @@ const store = usePaymentStore()
 const templateStore = usePaymentTemplateStore()
 const bankAccountStore = useBankAccountStore()
 const ownerStore = useOwnerStore()
+const categoryStore = usePaymentCategoryStore()
 const confirmDialog = ref<InstanceType<typeof ConfirmDialog>>()
 const pendingDeleteId = ref<string>()
 const showGenerateSection = ref(false)
@@ -67,6 +69,14 @@ function ownerName(ownerId: string): string {
   return ownerStore.getById(ownerId)?.name ?? 'Desconhecido'
 }
 
+function categoryName(categoryId: string): string {
+  return categoryStore.getById(categoryId)?.name ?? 'Sem categoria'
+}
+
+function categoryColor(categoryId: string): string {
+  return categoryStore.getById(categoryId)?.color ?? '#888'
+}
+
 function formatCurrency(value: number): string {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
@@ -77,6 +87,7 @@ function formatDate(date: Date): string {
 
 const { sortedItems, sortBy, sortClass } = useSortable(toRef(store, 'payments'), {
   template: (p) => templateName(p.templateId).toLowerCase(),
+  category: (p) => categoryName(p.categoryId).toLowerCase(),
   owner: (p) => ownerName(p.ownerId).toLowerCase(),
   account: (p) => accountName(p.bankAccountId).toLowerCase(),
   value: (p) => p.value,
@@ -104,6 +115,7 @@ onMounted(() => {
   templateStore.loadAll()
   bankAccountStore.loadAll()
   ownerStore.loadAll()
+  categoryStore.loadAll()
 })
 
 function handleGenerate() {
@@ -215,6 +227,7 @@ function handleDelete() {
           <thead>
             <tr>
               <th :class="sortClass('template')" @click="sortBy('template')">Modelo</th>
+              <th :class="sortClass('category')" @click="sortBy('category')">Categoria</th>
               <th :class="sortClass('owner')" @click="sortBy('owner')">Titular</th>
               <th :class="sortClass('account')" @click="sortBy('account')">Conta</th>
               <th :class="sortClass('value')" @click="sortBy('value')">Valor</th>
@@ -225,6 +238,14 @@ function handleDelete() {
           <tbody>
             <tr v-for="payment in payments" :key="payment.id">
               <td>{{ templateName(payment.templateId) }}</td>
+              <td>
+                <span
+                  class="category-badge"
+                  :style="{ backgroundColor: categoryColor(payment.categoryId) }"
+                >
+                  {{ categoryName(payment.categoryId) }}
+                </span>
+              </td>
               <td>{{ ownerName(payment.ownerId) }}</td>
               <td>{{ accountName(payment.bankAccountId) }}</td>
               <td>{{ formatCurrency(payment.value) }}</td>
@@ -406,5 +427,14 @@ function handleDelete() {
   border: none;
   border-radius: 0;
   border-top: 1px solid var(--color-border);
+}
+
+.category-badge {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #fff;
 }
 </style>
