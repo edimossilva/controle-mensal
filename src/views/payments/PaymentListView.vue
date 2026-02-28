@@ -13,6 +13,7 @@ const bankAccountStore = useBankAccountStore()
 const ownerStore = useOwnerStore()
 const confirmDialog = ref<InstanceType<typeof ConfirmDialog>>()
 const pendingDeleteId = ref<string>()
+const showGenerateSection = ref(false)
 
 const now = new Date()
 const generateYear = ref(now.getFullYear())
@@ -109,10 +110,15 @@ function handleDelete() {
 <template>
   <div class="page-header">
     <h1>Pagamentos</h1>
-    <RouterLink to="/payments/new" class="btn">Novo Pagamento</RouterLink>
+    <div class="header-actions">
+      <button type="button" class="btn btn-secondary" @click="showGenerateSection = !showGenerateSection">
+        {{ showGenerateSection ? 'Fechar gerador' : 'Gerar a partir dos modelos' }}
+      </button>
+      <RouterLink to="/payments/new" class="btn">Novo Pagamento</RouterLink>
+    </div>
   </div>
 
-  <section class="generate-section">
+  <section v-if="showGenerateSection" class="generate-section">
     <h2>Gerar pagamentos a partir dos modelos</h2>
     <form class="generate-form" @submit.prevent="handleGenerate">
       <div class="generate-fields">
@@ -196,6 +202,21 @@ function handleDelete() {
 </template>
 
 <style scoped>
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-secondary {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.btn-secondary:hover {
+  background: var(--color-border);
+}
+
 .generate-section {
   margin-bottom: 1.5rem;
   padding: 1.25rem;
