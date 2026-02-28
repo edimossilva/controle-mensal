@@ -5,6 +5,7 @@ import { usePaymentTemplateStore } from '@/stores/payment-template-store'
 import { useBankAccountStore } from '@/stores/bank-account-store'
 import { useOwnerStore } from '@/stores/owner-store'
 import { usePaymentCategoryStore } from '@/stores/payment-category-store'
+import { usePaymentBatchStore } from '@/stores/payment-batch-store'
 import { useSortable } from '@/composables/use-sortable'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import type { PaymentStatus } from '@/entities/payment'
@@ -14,9 +15,16 @@ const templateStore = usePaymentTemplateStore()
 const bankAccountStore = useBankAccountStore()
 const ownerStore = useOwnerStore()
 const categoryStore = usePaymentCategoryStore()
+const batchStore = usePaymentBatchStore()
 const confirmDialog = ref<InstanceType<typeof ConfirmDialog>>()
 const pendingDeleteId = ref<string>()
 const showGenerateSection = ref(false)
+
+const selectedPaymentIds = reactive(new Set<string>())
+const showBatchForm = ref(false)
+const batchName = ref('')
+const batchDate = ref(new Date().toISOString().slice(0, 10))
+const batchError = ref<string | null>(null)
 
 const now = new Date()
 const generateYear = ref(now.getFullYear())
@@ -142,6 +150,64 @@ function handleDelete() {
     bankAccountStore.loadAll()
   }
 }
+
+function togglePaymentSelection(id: string) {
+  if (selectedPaymentIds.has(id)) {
+    selectedPaymentIds.delete(id)
+  } else {
+    selectedPaymentIds.add(id)
+  }
+}
+
+const pendingPayments = computed(() => groupedPayments.value.get('pending') ?? [])
+
+const allPendingSelected = computed(
+  () => pendingPayments.value.length > 0 && pendingPayments.value.every((p) => selectedPaymentIds.has(p.id)),
+)
+
+function toggleSelectAllPending() {
+  if (allPendingSelected.value) {
+    for (const p of pendingPayments.value) {
+      selectedPaymentIds.delete(p.id)
+    }
+  } else {
+    for (const p of pendingPayments.value) {
+      selectedPaymentIds.add(p.id)
+    }
+  }
+}
+
+const selectedTotal = computed(() => {
+  let total = 0
+  for (const id of selectedPaymentIds) {
+    const payment = store.payments.find((p) => p.id === id)
+    if (payment) total += payment.value
+  }
+  return total
+})
+
+function handleCreateBatch() {
+  batchError.value = null
+  if (!batchName.value.trim()) {
+    batchError.value = 'Informe o nome do lote.'
+    return
+  }
+  const success = batchStore.create({
+    name: batchName.value.trim(),
+    date: new Date(batchDate.value + 'T12:00:00'),
+    paymentIds: [...selectedPaymentIds],
+  })
+  if (success) {
+    selectedPaymentIds.clear()
+    showBatchForm.value = false
+    batchName.value = ''
+    batchDate.value = new Date().toISOString().slice(0, 10)
+    store.loadAll()
+    bankAccountStore.loadAll()
+  } else {
+    batchError.value = batchStore.error
+  }
+}
 </script>
 
 <template>
@@ -227,6 +293,13 @@ function handleDelete() {
         <table>
           <thead>
             <tr>
+              <th v-if="status === 'pending'" class="col-checkbox">
+                <input
+                  type="checkbox"
+                  :checked="allPendingSelected"
+                  @change="toggleSelectAllPending"
+                />
+              </th>
               <th :class="sortClass('template')" @click="sortBy('template')">Modelo</th>
               <th :class="sortClass('category')" @click="sortBy('category')">Categoria</th>
               <th :class="sortClass('owner')" @click="sortBy('owner')">Titular</th>
@@ -238,6 +311,13 @@ function handleDelete() {
           </thead>
           <tbody>
             <tr v-for="payment in payments" :key="payment.id">
+              <td v-if="status === 'pending'" class="col-checkbox">
+                <input
+                  type="checkbox"
+                  :checked="selectedPaymentIds.has(payment.id)"
+                  @change="togglePaymentSelection(payment.id)"
+                />
+              </td>
               <td>{{ templateName(payment.templateId) }}</td>
               <td>
                 <span
@@ -272,6 +352,34 @@ function handleDelete() {
     </section>
   </div>
   <p v-else-if="!store.error">Nenhum pagamento cadastrado.</p>
+
+  <div v-if="selectedPaymentIds.size > 0" class="batch-bar">
+    <div class="batch-bar__info">
+      <strong>{{ selectedPaymentIds.size }}</strong> pagamento(s) selecionado(s)
+      &mdash; Total: <strong>{{ formatCurrency(selectedTotal) }}</strong>
+    </div>
+    <div v-if="!showBatchForm" class="batch-bar__actions">
+      <button type="button" class="btn" @click="showBatchForm = true">Criar lote</button>
+      <button type="button" class="btn btn-secondary" @click="selectedPaymentIds.clear()">
+        Limpar
+      </button>
+    </div>
+    <form v-else class="batch-form" @submit.prevent="handleCreateBatch">
+      <input
+        v-model="batchName"
+        type="text"
+        placeholder="Nome do lote"
+        class="batch-form__input"
+        required
+      />
+      <input v-model="batchDate" type="date" class="batch-form__input" required />
+      <button type="submit" class="btn">Confirmar</button>
+      <button type="button" class="btn btn-secondary" @click="showBatchForm = false">
+        Cancelar
+      </button>
+      <span v-if="batchError" class="error">{{ batchError }}</span>
+    </form>
+  </div>
 
   <ConfirmDialog ref="confirmDialog" @confirm="handleDelete" />
 </template>
@@ -437,5 +545,55 @@ function handleDelete() {
   font-size: 0.75rem;
   font-weight: 600;
   color: #fff;
+}
+
+/* ── Checkbox column ─────────────────────────────────────────── */
+.col-checkbox {
+  width: 2.5rem;
+  text-align: center;
+}
+
+/* ── Batch action bar ────────────────────────────────────────── */
+.batch-bar {
+  position: sticky;
+  bottom: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-lg);
+  padding: 0.75rem 1.25rem;
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.15);
+  z-index: 50;
+}
+
+.batch-bar__info {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.batch-bar__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.batch-form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.batch-form__input {
+  padding: 0.375rem 0.625rem;
+  font-size: 0.875rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-text);
 }
 </style>

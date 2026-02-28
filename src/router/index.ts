@@ -110,6 +110,11 @@ const router = createRouter({
       component: () => import('@/views/payments/PaymentFormView.vue'),
     },
     {
+      path: '/payment-batches',
+      name: 'payment-batch-list',
+      component: () => import('@/views/payment-batches/PaymentBatchListView.vue'),
+    },
+    {
       path: '/sharing',
       name: 'sharing',
       component: () => import('@/views/sharing/SharingView.vue'),

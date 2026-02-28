@@ -9,3 +9,8 @@ export {
 } from './payment-template'
 export { type Payment, type PaymentStatus, type CreatePaymentInput, createPayment } from './payment'
 export { type BalanceHistoryEntry, type BalanceHistoryEntryType } from './balance-history-entry'
+export {
+  type PaymentBatch,
+  type CreatePaymentBatchInput,
+  createPaymentBatch,
+} from './payment-batch'
