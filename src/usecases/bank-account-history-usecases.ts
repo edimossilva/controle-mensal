@@ -36,7 +36,9 @@ export class BankAccountHistoryUseCases {
       .getByBankAccountId(accountId)
       .filter((payment) => payment.status === 'paid')
       .map((payment) => {
-        const template = this.templateRepo.getById(payment.templateId)
+        const template = payment.templateId
+          ? this.templateRepo.getById(payment.templateId)
+          : undefined
         return {
           id: payment.id,
           date: payment.paymentDate,

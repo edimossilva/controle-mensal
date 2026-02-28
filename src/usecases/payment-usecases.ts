@@ -31,9 +31,11 @@ export class PaymentUseCases {
   }
 
   create(input: CreatePaymentInput): UseCaseResult & { payment?: Payment } {
-    const template = this.templateRepo.getById(input.templateId)
-    if (!template) {
-      return { success: false, error: 'Modelo nao encontrado.' }
+    if (input.templateId) {
+      const template = this.templateRepo.getById(input.templateId)
+      if (!template) {
+        return { success: false, error: 'Modelo nao encontrado.' }
+      }
     }
     const bankAccount = this.bankAccountRepo.getById(input.bankAccountId)
     if (!bankAccount) {

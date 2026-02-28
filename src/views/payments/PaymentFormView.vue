@@ -46,7 +46,7 @@ watch(templateId, (id) => {
 
 watch(existing, (entity) => {
   if (entity) {
-    templateId.value = entity.templateId
+    templateId.value = entity.templateId ?? ''
     paymentDate.value = entity.paymentDate.toISOString().slice(0, 10)
     dueDateDay.value = entity.dueDateDay
     value.value = entity.value
@@ -64,7 +64,7 @@ function handleSubmit() {
   if (isEditMode.value && existing.value) {
     store.update({
       ...existing.value,
-      templateId: templateId.value,
+      templateId: templateId.value || undefined,
       paymentDate: parsedDate,
       dueDateDay: dueDateDay.value,
       value: value.value,
@@ -76,7 +76,7 @@ function handleSubmit() {
     })
   } else {
     store.create({
-      templateId: templateId.value,
+      templateId: templateId.value || undefined,
       paymentDate: parsedDate,
       dueDateDay: dueDateDay.value,
       value: value.value,
@@ -102,8 +102,8 @@ function handleSubmit() {
   <form @submit.prevent="handleSubmit">
     <div class="form-group">
       <label for="templateId">Modelo</label>
-      <select id="templateId" v-model="templateId" required>
-        <option value="" disabled>Selecione um modelo</option>
+      <select id="templateId" v-model="templateId">
+        <option value="">Nenhum</option>
         <option v-for="t in templateStore.templates" :key="t.id" :value="t.id">
           {{ t.name }}
         </option>

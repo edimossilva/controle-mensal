@@ -6,7 +6,7 @@ import { FirestoreRepository } from './firestore-repository'
 function serialize(payment: Payment): DocumentData {
   return {
     id: payment.id,
-    templateId: payment.templateId,
+    templateId: payment.templateId ?? null,
     paymentDate: Timestamp.fromDate(payment.paymentDate),
     dueDateDay: payment.dueDateDay ?? null,
     value: payment.value,
@@ -23,7 +23,7 @@ function serialize(payment: Payment): DocumentData {
 function deserialize(data: DocumentData): Payment {
   return {
     id: data.id as string,
-    templateId: data.templateId as string,
+    templateId: (data.templateId as string) ?? undefined,
     paymentDate: (data.paymentDate as Timestamp).toDate(),
     dueDateDay: (data.dueDateDay as number) ?? undefined,
     value: data.value as number,

@@ -57,7 +57,8 @@ function toggleGroup(status: PaymentStatus) {
   expandedGroups[status] = !expandedGroups[status]
 }
 
-function templateName(templateId: string): string {
+function templateName(templateId?: string): string {
+  if (!templateId) return '—'
   return templateStore.getById(templateId)?.name ?? 'Desconhecido'
 }
 
