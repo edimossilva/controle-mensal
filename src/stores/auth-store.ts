@@ -41,7 +41,15 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function signIn(): Promise<void> {
-    await signInWithGoogle()
+    const firebaseUser = await signInWithGoogle()
+    user.value = {
+      uid: firebaseUser.uid,
+      displayName: firebaseUser.displayName,
+      photoURL: firebaseUser.photoURL,
+      email: firebaseUser.email,
+    }
+    const db = getFirestoreInstance()
+    await initializeRepositories(db, firebaseUser.uid)
   }
 
   async function signOut(): Promise<void> {
