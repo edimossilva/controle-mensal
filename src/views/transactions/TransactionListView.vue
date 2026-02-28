@@ -1,18 +1,14 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, toRef } from 'vue'
 import { useTransactionStore } from '@/stores/transaction-store'
 import { useBankAccountStore } from '@/stores/bank-account-store'
+import { useSortable } from '@/composables/use-sortable'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const store = useTransactionStore()
 const bankAccountStore = useBankAccountStore()
 const confirmDialog = ref<InstanceType<typeof ConfirmDialog>>()
 const pendingDeleteId = ref<string>()
-
-onMounted(() => {
-  store.loadAll()
-  bankAccountStore.loadAll()
-})
 
 function accountName(accountId: string): string {
   return bankAccountStore.getById(accountId)?.name ?? 'Desconhecida'
@@ -25,6 +21,19 @@ function formatCurrency(value: number): string {
 function formatDate(date: Date): string {
   return date.toLocaleDateString('pt-BR')
 }
+
+const { sortedItems, sortBy, sortClass } = useSortable(toRef(store, 'transactions'), {
+  name: (t) => t.name.toLowerCase(),
+  amount: (t) => t.amount,
+  origin: (t) => accountName(t.originAccountId).toLowerCase(),
+  destination: (t) => accountName(t.destinationAccountId).toLowerCase(),
+  date: (t) => t.date,
+})
+
+onMounted(() => {
+  store.loadAll()
+  bankAccountStore.loadAll()
+})
 
 function confirmDelete(id: string) {
   pendingDeleteId.value = id
@@ -50,16 +59,16 @@ function handleDelete() {
   <table v-if="store.transactions.length">
     <thead>
       <tr>
-        <th>Nome</th>
-        <th>Valor</th>
-        <th>Origem</th>
-        <th>Destino</th>
-        <th>Data</th>
+        <th :class="sortClass('name')" @click="sortBy('name')">Nome</th>
+        <th :class="sortClass('amount')" @click="sortBy('amount')">Valor</th>
+        <th :class="sortClass('origin')" @click="sortBy('origin')">Origem</th>
+        <th :class="sortClass('destination')" @click="sortBy('destination')">Destino</th>
+        <th :class="sortClass('date')" @click="sortBy('date')">Data</th>
         <th>Acoes</th>
       </tr>
     </thead>
     <tbody>
-      <tr v-for="transaction in store.transactions" :key="transaction.id">
+      <tr v-for="transaction in sortedItems" :key="transaction.id">
         <td>{{ transaction.name }}</td>
         <td>{{ formatCurrency(transaction.amount) }}</td>
         <td>{{ accountName(transaction.originAccountId) }}</td>

@@ -1,18 +1,14 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, toRef } from 'vue'
 import { useBankAccountStore } from '@/stores/bank-account-store'
 import { useOwnerStore } from '@/stores/owner-store'
+import { useSortable } from '@/composables/use-sortable'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const store = useBankAccountStore()
 const ownerStore = useOwnerStore()
 const confirmDialog = ref<InstanceType<typeof ConfirmDialog>>()
 const pendingDeleteId = ref<string>()
-
-onMounted(() => {
-  store.loadAll()
-  ownerStore.loadAll()
-})
 
 function ownerName(ownerId: string): string {
   return ownerStore.getById(ownerId)?.name ?? 'Desconhecido'
@@ -21,6 +17,18 @@ function ownerName(ownerId: string): string {
 function formatCurrency(value: number): string {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
+
+const { sortedItems, sortBy, sortClass } = useSortable(toRef(store, 'accounts'), {
+  name: (a) => a.name.toLowerCase(),
+  owner: (a) => ownerName(a.ownerId).toLowerCase(),
+  initialBalance: (a) => a.initialBalance,
+  currentBalance: (a) => a.currentBalance,
+})
+
+onMounted(() => {
+  store.loadAll()
+  ownerStore.loadAll()
+})
 
 function confirmDelete(id: string) {
   pendingDeleteId.value = id
@@ -45,15 +53,19 @@ function handleDelete() {
   <table v-if="store.accounts.length">
     <thead>
       <tr>
-        <th>Nome</th>
-        <th>Titular</th>
-        <th>Saldo Inicial</th>
-        <th>Saldo Atual</th>
+        <th :class="sortClass('name')" @click="sortBy('name')">Nome</th>
+        <th :class="sortClass('owner')" @click="sortBy('owner')">Titular</th>
+        <th :class="sortClass('initialBalance')" @click="sortBy('initialBalance')">
+          Saldo Inicial
+        </th>
+        <th :class="sortClass('currentBalance')" @click="sortBy('currentBalance')">
+          Saldo Atual
+        </th>
         <th>Acoes</th>
       </tr>
     </thead>
     <tbody>
-      <tr v-for="account in store.accounts" :key="account.id">
+      <tr v-for="account in sortedItems" :key="account.id">
         <td>{{ account.name }}</td>
         <td>{{ ownerName(account.ownerId) }}</td>
         <td>{{ formatCurrency(account.initialBalance) }}</td>

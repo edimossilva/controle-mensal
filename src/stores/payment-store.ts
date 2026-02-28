@@ -51,5 +51,16 @@ export const usePaymentStore = defineStore('payment', () => {
     return result.success
   }
 
-  return { payments, error, loadAll, getById, create, update, remove }
+  function generateFromTemplates(
+    year: number,
+    month: number,
+    bankAccountId: string,
+  ): { created: number; skipped: number } | null {
+    const result = createUseCases().generateFromTemplates(year, month, bankAccountId)
+    error.value = result.error ?? null
+    if (result.success) loadAll()
+    return result.success ? { created: result.created, skipped: result.skipped } : null
+  }
+
+  return { payments, error, loadAll, getById, create, update, remove, generateFromTemplates }
 })

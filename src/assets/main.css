@@ -205,6 +205,39 @@ th {
   border-bottom: 1px solid var(--color-border);
 }
 
+th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: color var(--transition-fast);
+}
+
+th.sortable:hover {
+  color: var(--color-text-secondary);
+}
+
+th.sortable::after {
+  content: ' \2195';
+  font-size: 0.7em;
+  opacity: 0.4;
+}
+
+th.sort-asc::after {
+  content: ' \2191';
+  opacity: 1;
+  color: var(--color-primary);
+}
+
+th.sort-desc::after {
+  content: ' \2193';
+  opacity: 1;
+  color: var(--color-primary);
+}
+
+th.sort-asc,
+th.sort-desc {
+  color: var(--color-text-secondary);
+}
+
 td {
   padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--color-border);

@@ -1,11 +1,16 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, toRef } from 'vue'
 import { useOwnerStore } from '@/stores/owner-store'
+import { useSortable } from '@/composables/use-sortable'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const store = useOwnerStore()
 const confirmDialog = ref<InstanceType<typeof ConfirmDialog>>()
 const pendingDeleteId = ref<string>()
+
+const { sortedItems, sortBy, sortClass } = useSortable(toRef(store, 'owners'), {
+  name: (o) => o.name.toLowerCase(),
+})
 
 onMounted(() => store.loadAll())
 
@@ -32,12 +37,12 @@ function handleDelete() {
   <table v-if="store.owners.length">
     <thead>
       <tr>
-        <th>Nome</th>
+        <th :class="sortClass('name')" @click="sortBy('name')">Nome</th>
         <th>Acoes</th>
       </tr>
     </thead>
     <tbody>
-      <tr v-for="owner in store.owners" :key="owner.id">
+      <tr v-for="owner in sortedItems" :key="owner.id">
         <td>{{ owner.name }}</td>
         <td>
           <div class="actions">

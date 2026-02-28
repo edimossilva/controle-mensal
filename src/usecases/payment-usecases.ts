@@ -69,6 +69,69 @@ export class PaymentUseCases {
     return { success: true }
   }
 
+  generateFromTemplates(
+    year: number,
+    month: number,
+    bankAccountId: string,
+  ): UseCaseResult & { created: number; skipped: number } {
+    const bankAccount = this.bankAccountRepo.getById(bankAccountId)
+    if (!bankAccount) {
+      return { success: false, error: 'Conta bancaria nao encontrada.', created: 0, skipped: 0 }
+    }
+
+    const templates = this.templateRepo.getAll()
+    if (templates.length === 0) {
+      return { success: false, error: 'Nenhum modelo cadastrado.', created: 0, skipped: 0 }
+    }
+
+    const allPayments = this.paymentRepo.getAll()
+    let created = 0
+    let skipped = 0
+
+    for (const template of templates) {
+      if (this.hasPaymentForMonth(allPayments, template.id, year, month)) {
+        skipped++
+        continue
+      }
+
+      const paymentDate = this.buildPaymentDate(year, month, template.dueDateDay)
+      const payment = createPayment({
+        templateId: template.id,
+        paymentDate,
+        dueDateDay: template.dueDateDay,
+        value: template.value,
+        status: 'pending',
+        bankAccountId,
+        ownerId: template.ownerId,
+      })
+      this.paymentRepo.create(payment)
+      created++
+    }
+
+    return { success: true, created, skipped }
+  }
+
+  private hasPaymentForMonth(
+    payments: Payment[],
+    templateId: string,
+    year: number,
+    month: number,
+  ): boolean {
+    return payments.some(
+      (p) =>
+        p.templateId === templateId &&
+        p.paymentDate.getFullYear() === year &&
+        p.paymentDate.getMonth() === month,
+    )
+  }
+
+  private buildPaymentDate(year: number, month: number, dueDateDay?: number): Date {
+    if (!dueDateDay) return new Date(year, month, 1)
+    const lastDay = new Date(year, month + 1, 0).getDate()
+    const day = Math.min(dueDateDay, lastDay)
+    return new Date(year, month, day)
+  }
+
   private applyBalanceEffect(payment: Payment): void {
     if (payment.status !== 'paid') return
     const account = this.bankAccountRepo.getById(payment.bankAccountId)

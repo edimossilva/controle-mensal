@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, toRef } from 'vue'
 import { useRoute } from 'vue-router'
 import { useBankAccountHistoryStore } from '@/stores/bank-account-history-store'
 import { useBankAccountStore } from '@/stores/bank-account-store'
+import { useSortable } from '@/composables/use-sortable'
 
 const route = useRoute()
 const store = useBankAccountHistoryStore()
@@ -33,6 +34,14 @@ function accountName(accountId?: string): string {
   return bankAccountStore.getById(accountId)?.name ?? 'Desconhecida'
 }
 
+const { sortedItems, sortBy, sortClass } = useSortable(toRef(store, 'entries'), {
+  date: (e) => e.date,
+  type: (e) => e.type,
+  description: (e) => e.description.toLowerCase(),
+  target: (e) => accountName(e.targetAccountId).toLowerCase(),
+  amount: (e) => e.amount,
+})
+
 onMounted(() => {
   bankAccountStore.loadAll()
   store.loadByAccountId(accountId)
@@ -48,15 +57,15 @@ onMounted(() => {
   <table v-if="store.entries.length">
     <thead>
       <tr>
-        <th>Data</th>
-        <th>Tipo</th>
-        <th>Descricao</th>
-        <th>Conta Destino</th>
-        <th>Efeito</th>
+        <th :class="sortClass('date')" @click="sortBy('date')">Data</th>
+        <th :class="sortClass('type')" @click="sortBy('type')">Tipo</th>
+        <th :class="sortClass('description')" @click="sortBy('description')">Descricao</th>
+        <th :class="sortClass('target')" @click="sortBy('target')">Conta Destino</th>
+        <th :class="sortClass('amount')" @click="sortBy('amount')">Efeito</th>
       </tr>
     </thead>
     <tbody>
-      <tr v-for="entry in store.entries" :key="entry.id">
+      <tr v-for="entry in sortedItems" :key="entry.id">
         <td>{{ formatDate(entry.date) }}</td>
         <td>{{ typeLabel(entry.type) }}</td>
         <td>{{ entry.description }}</td>

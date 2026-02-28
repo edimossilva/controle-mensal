@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, toRef } from 'vue'
 import { usePaymentTemplateStore } from '@/stores/payment-template-store'
 import { useOwnerStore } from '@/stores/owner-store'
 import { usePaymentCategoryStore } from '@/stores/payment-category-store'
+import { useSortable } from '@/composables/use-sortable'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const store = usePaymentTemplateStore()
@@ -10,12 +11,6 @@ const ownerStore = useOwnerStore()
 const categoryStore = usePaymentCategoryStore()
 const confirmDialog = ref<InstanceType<typeof ConfirmDialog>>()
 const pendingDeleteId = ref<string>()
-
-onMounted(() => {
-  store.loadAll()
-  ownerStore.loadAll()
-  categoryStore.loadAll()
-})
 
 function ownerName(ownerId: string): string {
   return ownerStore.getById(ownerId)?.name ?? 'Desconhecido'
@@ -28,6 +23,19 @@ function categoryName(categoryId: string): string {
 function formatCurrency(value: number): string {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
+
+const { sortedItems, sortBy, sortClass } = useSortable(toRef(store, 'templates'), {
+  name: (t) => t.name.toLowerCase(),
+  category: (t) => categoryName(t.categoryId).toLowerCase(),
+  owner: (t) => ownerName(t.ownerId).toLowerCase(),
+  value: (t) => t.value,
+})
+
+onMounted(() => {
+  store.loadAll()
+  ownerStore.loadAll()
+  categoryStore.loadAll()
+})
 
 function confirmDelete(id: string) {
   pendingDeleteId.value = id
@@ -52,15 +60,15 @@ function handleDelete() {
   <table v-if="store.templates.length">
     <thead>
       <tr>
-        <th>Nome</th>
-        <th>Categoria</th>
-        <th>Titular</th>
-        <th>Valor</th>
+        <th :class="sortClass('name')" @click="sortBy('name')">Nome</th>
+        <th :class="sortClass('category')" @click="sortBy('category')">Categoria</th>
+        <th :class="sortClass('owner')" @click="sortBy('owner')">Titular</th>
+        <th :class="sortClass('value')" @click="sortBy('value')">Valor</th>
         <th>Acoes</th>
       </tr>
     </thead>
     <tbody>
-      <tr v-for="template in store.templates" :key="template.id">
+      <tr v-for="template in sortedItems" :key="template.id">
         <td>{{ template.name }}</td>
         <td>{{ categoryName(template.categoryId) }}</td>
         <td>{{ ownerName(template.ownerId) }}</td>
