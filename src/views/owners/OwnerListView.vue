@@ -27,8 +27,8 @@ function handleDelete() {
 </script>
 
 <template>
-  <div class="page-header">
-    <h1>Titulares</h1>
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="!mb-0">Titulares</h1>
     <RouterLink to="/owners/new" class="btn">Novo Titular</RouterLink>
   </div>
 

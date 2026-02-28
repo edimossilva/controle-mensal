@@ -24,12 +24,16 @@ async function handleSignIn() {
 </script>
 
 <template>
-  <div class="login-page">
-    <div class="login-card">
-      <h1 class="login-title">Controle Mensal</h1>
-      <p class="login-subtitle">Gerencie suas financas de forma simples</p>
-      <button class="btn-google" :disabled="signingIn" @click="handleSignIn">
-        <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20">
+  <div class="flex items-center justify-center min-h-[80vh]">
+    <div class="text-center px-8 py-12 bg-bg-subtle border border-border rounded-lg max-w-[400px] w-full">
+      <h1 class="text-2xl font-bold text-text !mb-2">Controle Mensal</h1>
+      <p class="text-sm text-text-muted !mb-8">Gerencie suas financas de forma simples</p>
+      <button
+        class="inline-flex items-center gap-3 px-6 py-3 text-[0.9375rem] font-medium text-text bg-surface border border-border rounded-md cursor-pointer transition-[background,border-color] duration-[120ms] hover:bg-surface-hover hover:border-border-hover disabled:opacity-60 disabled:cursor-not-allowed"
+        :disabled="signingIn"
+        @click="handleSignIn"
+      >
+        <svg class="shrink-0" viewBox="0 0 24 24" width="20" height="20">
           <path
             fill="#4285F4"
             d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
@@ -49,76 +53,7 @@ async function handleSignIn() {
         </svg>
         {{ signingIn ? 'Entrando...' : 'Entrar com Google' }}
       </button>
-      <p v-if="error" class="login-error">{{ error }}</p>
+      <p v-if="error" class="mt-4 text-[0.8125rem] text-danger">{{ error }}</p>
     </div>
   </div>
 </template>
-
-<style scoped>
-.login-page {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 80vh;
-}
-
-.login-card {
-  text-align: center;
-  padding: 3rem 2rem;
-  background: var(--color-bg-subtle);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  max-width: 400px;
-  width: 100%;
-}
-
-.login-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin: 0 0 0.5rem;
-}
-
-.login-subtitle {
-  font-size: 0.875rem;
-  color: var(--color-text-muted);
-  margin: 0 0 2rem;
-}
-
-.btn-google {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1.5rem;
-  font-size: 0.9375rem;
-  font-weight: 500;
-  color: var(--color-text-primary);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition:
-    background var(--transition-fast),
-    border-color var(--transition-fast);
-}
-
-.btn-google:hover:not(:disabled) {
-  background: var(--color-surface-hover);
-  border-color: var(--color-border-strong);
-}
-
-.btn-google:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.google-icon {
-  flex-shrink: 0;
-}
-
-.login-error {
-  margin-top: 1rem;
-  font-size: 0.8125rem;
-  color: var(--color-danger);
-}
-</style>

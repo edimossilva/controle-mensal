@@ -49,8 +49,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-header">
-    <h1>Historico — {{ account?.name ?? 'Conta' }}</h1>
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="!mb-0">Historico — {{ account?.name ?? 'Conta' }}</h1>
     <RouterLink to="/bank-accounts" class="btn btn-secondary">Voltar</RouterLink>
   </div>
 

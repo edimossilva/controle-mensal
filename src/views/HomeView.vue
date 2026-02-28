@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useBankAccountStore } from '@/stores/bank-account-store'
 import { usePaymentStore } from '@/stores/payment-store'
 import { usePaymentCategoryStore } from '@/stores/payment-category-store'
@@ -12,8 +12,8 @@ const categoryStore = usePaymentCategoryStore()
 const batchStore = usePaymentBatchStore()
 
 const now = new Date()
-const currentYear = now.getFullYear()
-const currentMonth = now.getMonth()
+const filterYear = ref(now.getFullYear())
+const filterMonth = ref(now.getMonth())
 
 const MONTH_NAMES = [
   'Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho',
@@ -40,7 +40,9 @@ function formatCurrency(value: number): string {
 // ── Current month payments ──────────────────────────────────────
 const monthPayments = computed(() =>
   paymentStore.payments.filter(
-    (p) => p.paymentDate.getFullYear() === currentYear && p.paymentDate.getMonth() === currentMonth,
+    (p) =>
+      p.paymentDate.getFullYear() === filterYear.value &&
+      p.paymentDate.getMonth() === filterMonth.value,
   ),
 )
 
@@ -80,7 +82,8 @@ const categoryBreakdown = computed(() => {
 
 // ── Upcoming pending payments (next 7 days) ─────────────────────
 const upcomingPayments = computed(() => {
-  const today = new Date(currentYear, currentMonth, now.getDate())
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
   const weekAhead = new Date(today)
   weekAhead.setDate(weekAhead.getDate() + 7)
 
@@ -91,9 +94,10 @@ const upcomingPayments = computed(() => {
 
 // ── Overdue payments ────────────────────────────────────────────
 const overduePayments = computed(() => {
-  const today = new Date(currentYear, currentMonth, now.getDate())
-  return paymentStore.payments
-    .filter((p) => p.status === 'pending' && p.paymentDate < today)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return monthPending.value
+    .filter((p) => p.paymentDate < today)
     .sort((a, b) => a.paymentDate.getTime() - b.paymentDate.getTime())
 })
 
@@ -113,41 +117,75 @@ function batchTotal(paymentIds: string[]): number {
 </script>
 
 <template>
-  <div class="page-header">
-    <h1>Controle Mensal</h1>
-    <span class="month-label">{{ MONTH_NAMES[currentMonth] }} {{ currentYear }}</span>
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="!mb-0">Controle Mensal</h1>
+    <div class="flex gap-3 items-center">
+      <div class="flex items-center gap-1.5">
+        <label for="homeMonth" class="!mb-0 text-[0.8125rem] font-medium text-text-muted">Mes</label>
+        <select id="homeMonth" v-model.number="filterMonth" class="!w-auto !py-1 !px-2 text-[0.8125rem]">
+          <option v-for="(name, index) in MONTH_NAMES" :key="index" :value="index">{{ name }}</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <label for="homeYear" class="!mb-0 text-[0.8125rem] font-medium text-text-muted">Ano</label>
+        <select id="homeYear" v-model.number="filterYear" class="!w-auto !py-1 !px-2 text-[0.8125rem]">
+          <option v-for="y in 6" :key="y" :value="now.getFullYear() - 3 + y">
+            {{ now.getFullYear() - 3 + y }}
+          </option>
+        </select>
+      </div>
+    </div>
   </div>
 
   <!-- ── Summary cards ──────────────────────────────────────────── -->
-  <div class="card-grid">
-    <div class="card card--balance">
-      <p>Saldo total</p>
-      <h2>{{ formatCurrency(totalBalance) }}</h2>
+  <div class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mt-6">
+    <div class="dash-card">
+      <p class="order-first mb-1 text-[0.8125rem] text-text-muted font-medium uppercase tracking-[0.04em]">
+        Saldo total
+      </p>
+      <h2 class="text-2xl font-bold text-primary break-words !mb-1 !tracking-normal">
+        {{ formatCurrency(totalBalance) }}
+      </h2>
     </div>
-    <div class="card card--paid">
-      <p>Pago este mes</p>
-      <h2>{{ formatCurrency(monthTotalPaid) }}</h2>
-      <span class="card__detail">{{ monthPaid.length }} pagamento(s)</span>
+    <div class="dash-card">
+      <p class="order-first mb-1 text-[0.8125rem] text-text-muted font-medium uppercase tracking-[0.04em]">
+        Pago este mes
+      </p>
+      <h2 class="text-2xl font-bold text-success break-words !mb-1 !tracking-normal">
+        {{ formatCurrency(monthTotalPaid) }}
+      </h2>
+      <span class="text-xs text-text-muted mt-0.5">{{ monthPaid.length }} pagamento(s)</span>
     </div>
-    <div class="card card--pending">
-      <p>Pendente este mes</p>
-      <h2>{{ formatCurrency(monthTotalPending) }}</h2>
-      <span class="card__detail">{{ monthPending.length }} pagamento(s)</span>
+    <div class="dash-card">
+      <p class="order-first mb-1 text-[0.8125rem] text-text-muted font-medium uppercase tracking-[0.04em]">
+        Pendente este mes
+      </p>
+      <h2 class="text-2xl font-bold text-warning break-words !mb-1 !tracking-normal">
+        {{ formatCurrency(monthTotalPending) }}
+      </h2>
+      <span class="text-xs text-text-muted mt-0.5">{{ monthPending.length }} pagamento(s)</span>
     </div>
-    <div class="card">
-      <p>Total do mes</p>
-      <h2>{{ formatCurrency(monthTotalAll) }}</h2>
-      <span class="card__detail">{{ monthPayments.length }} pagamento(s)</span>
+    <div class="dash-card">
+      <p class="order-first mb-1 text-[0.8125rem] text-text-muted font-medium uppercase tracking-[0.04em]">
+        Total do mes
+      </p>
+      <h2 class="text-2xl font-bold text-primary break-words !mb-1 !tracking-normal">
+        {{ formatCurrency(monthTotalAll) }}
+      </h2>
+      <span class="text-xs text-text-muted mt-0.5">{{ monthPayments.length }} pagamento(s)</span>
     </div>
   </div>
 
   <!-- ── Progress bar ───────────────────────────────────────────── -->
-  <section v-if="monthPayments.length > 0" class="dashboard-section">
-    <h2>Progresso do mes</h2>
-    <div class="progress-bar">
-      <div class="progress-bar__fill" :style="{ width: monthProgress + '%' }" />
+  <section v-if="monthPayments.length > 0" class="dash-section">
+    <h2 class="text-[0.9375rem] font-semibold mb-4 !tracking-normal">Progresso do mes</h2>
+    <div class="h-2.5 bg-white/[0.06] rounded-full overflow-hidden">
+      <div
+        class="h-full bg-success rounded-full transition-[width] duration-[400ms] ease-out"
+        :style="{ width: monthProgress + '%' }"
+      />
     </div>
-    <div class="progress-bar__labels">
+    <div class="flex justify-between mt-2 text-[0.8125rem] text-text-muted">
       <span>{{ monthProgress }}% concluido</span>
       <span>
         {{ monthPaid.length + monthSkipped.length }} / {{ monthPayments.length }} resolvidos
@@ -156,14 +194,18 @@ function batchTotal(paymentIds: string[]): number {
   </section>
 
   <!-- ── Bank accounts ──────────────────────────────────────────── -->
-  <section v-if="bankAccountStore.accounts.length > 0" class="dashboard-section">
-    <h2>Contas</h2>
-    <div class="account-list">
-      <div v-for="account in bankAccountStore.accounts" :key="account.id" class="account-item">
-        <span class="account-item__name">{{ account.name }}</span>
+  <section v-if="bankAccountStore.accounts.length > 0" class="dash-section">
+    <h2 class="text-[0.9375rem] font-semibold mb-4 !tracking-normal">Contas</h2>
+    <div class="flex flex-col gap-2">
+      <div
+        v-for="account in bankAccountStore.accounts"
+        :key="account.id"
+        class="flex items-center justify-between px-3 py-2 bg-white/[0.03] rounded-sm"
+      >
+        <span class="text-sm font-medium text-text-secondary">{{ account.name }}</span>
         <span
-          class="account-item__balance"
-          :class="{ 'balance--negative': account.currentBalance < 0 }"
+          class="text-sm font-semibold"
+          :class="account.currentBalance < 0 ? 'text-danger' : 'text-success'"
         >
           {{ formatCurrency(account.currentBalance) }}
         </span>
@@ -172,9 +214,11 @@ function batchTotal(paymentIds: string[]): number {
   </section>
 
   <!-- ── Overdue payments ───────────────────────────────────────── -->
-  <section v-if="overduePayments.length > 0" class="dashboard-section dashboard-section--danger">
-    <h2>Pagamentos atrasados</h2>
-    <table>
+  <section v-if="overduePayments.length > 0" class="dash-section border-danger bg-danger-dim">
+    <h2 class="text-[0.9375rem] font-semibold mb-4 text-danger !tracking-normal">
+      Pagamentos atrasados
+    </h2>
+    <table class="!mt-0 !border-0 !rounded-none">
       <thead>
         <tr>
           <th>Categoria</th>
@@ -186,7 +230,7 @@ function batchTotal(paymentIds: string[]): number {
         <tr v-for="p in overduePayments" :key="p.id">
           <td>
             <span
-              class="category-badge"
+              class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold text-white"
               :style="{ backgroundColor: categoryStore.getById(p.categoryId)?.color ?? '#888' }"
             >
               {{ categoryStore.getById(p.categoryId)?.name ?? 'Sem categoria' }}
@@ -200,9 +244,9 @@ function batchTotal(paymentIds: string[]): number {
   </section>
 
   <!-- ── Upcoming payments ──────────────────────────────────────── -->
-  <section v-if="upcomingPayments.length > 0" class="dashboard-section">
-    <h2>Proximos 7 dias</h2>
-    <table>
+  <section v-if="upcomingPayments.length > 0" class="dash-section">
+    <h2 class="text-[0.9375rem] font-semibold mb-4 !tracking-normal">Proximos 7 dias</h2>
+    <table class="!mt-0 !border-0 !rounded-none">
       <thead>
         <tr>
           <th>Categoria</th>
@@ -214,7 +258,7 @@ function batchTotal(paymentIds: string[]): number {
         <tr v-for="p in upcomingPayments" :key="p.id">
           <td>
             <span
-              class="category-badge"
+              class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold text-white"
               :style="{ backgroundColor: categoryStore.getById(p.categoryId)?.color ?? '#888' }"
             >
               {{ categoryStore.getById(p.categoryId)?.name ?? 'Sem categoria' }}
@@ -228,50 +272,71 @@ function batchTotal(paymentIds: string[]): number {
   </section>
 
   <!-- ── Category breakdown ─────────────────────────────────────── -->
-  <section v-if="categoryBreakdown.length > 0" class="dashboard-section">
-    <h2>Gastos por categoria</h2>
-    <div class="category-list">
-      <div v-for="cat in categoryBreakdown" :key="cat.name" class="category-row">
-        <div class="category-row__label">
-          <span class="category-badge" :style="{ backgroundColor: cat.color }">
+  <section v-if="categoryBreakdown.length > 0" class="dash-section">
+    <h2 class="text-[0.9375rem] font-semibold mb-4 !tracking-normal">Gastos por categoria</h2>
+    <div class="flex flex-col gap-2.5">
+      <div v-for="cat in categoryBreakdown" :key="cat.name" class="flex items-center gap-3">
+        <div class="min-w-[120px] shrink-0">
+          <span
+            class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold text-white"
+            :style="{ backgroundColor: cat.color }"
+          >
             {{ cat.name }}
           </span>
         </div>
-        <div class="category-row__bar-wrapper">
+        <div class="flex-1 h-2 bg-white/[0.06] rounded-full overflow-hidden">
           <div
-            class="category-row__bar"
+            class="h-full rounded-full transition-[width] duration-[400ms] ease-out min-w-1"
             :style="{
               width: (monthTotalAll > 0 ? (cat.total / monthTotalAll) * 100 : 0) + '%',
               backgroundColor: cat.color,
             }"
           />
         </div>
-        <span class="category-row__value">{{ formatCurrency(cat.total) }}</span>
+        <span class="text-[0.8125rem] font-semibold text-text-secondary min-w-[90px] text-right">
+          {{ formatCurrency(cat.total) }}
+        </span>
       </div>
     </div>
   </section>
 
   <!-- ── Monthly status breakdown ───────────────────────────────── -->
-  <section v-if="monthPayments.length > 0" class="dashboard-section">
-    <h2>Resumo por status</h2>
-    <div class="status-summary">
-      <div class="status-item">
-        <span class="status-dot status-dot--pending" />
-        <span class="status-item__label">{{ STATUS_LABELS.pending }}</span>
-        <span class="status-item__count">{{ monthPending.length }}</span>
-        <span class="status-item__value">{{ formatCurrency(monthTotalPending) }}</span>
+  <section v-if="monthPayments.length > 0" class="dash-section">
+    <h2 class="text-[0.9375rem] font-semibold mb-4 !tracking-normal">Resumo por status</h2>
+    <div class="flex flex-col gap-2">
+      <div class="flex items-center gap-2.5 px-3 py-2 bg-white/[0.03] rounded-sm">
+        <span class="w-2.5 h-2.5 rounded-full shrink-0 bg-warning" />
+        <span class="text-sm font-medium text-text-secondary min-w-[80px]">
+          {{ STATUS_LABELS.pending }}
+        </span>
+        <span class="text-xs text-text-muted bg-white/[0.06] px-2 py-0.5 rounded-full">
+          {{ monthPending.length }}
+        </span>
+        <span class="text-sm font-semibold text-text-secondary ml-auto">
+          {{ formatCurrency(monthTotalPending) }}
+        </span>
       </div>
-      <div class="status-item">
-        <span class="status-dot status-dot--paid" />
-        <span class="status-item__label">{{ STATUS_LABELS.paid }}</span>
-        <span class="status-item__count">{{ monthPaid.length }}</span>
-        <span class="status-item__value">{{ formatCurrency(monthTotalPaid) }}</span>
+      <div class="flex items-center gap-2.5 px-3 py-2 bg-white/[0.03] rounded-sm">
+        <span class="w-2.5 h-2.5 rounded-full shrink-0 bg-success" />
+        <span class="text-sm font-medium text-text-secondary min-w-[80px]">
+          {{ STATUS_LABELS.paid }}
+        </span>
+        <span class="text-xs text-text-muted bg-white/[0.06] px-2 py-0.5 rounded-full">
+          {{ monthPaid.length }}
+        </span>
+        <span class="text-sm font-semibold text-text-secondary ml-auto">
+          {{ formatCurrency(monthTotalPaid) }}
+        </span>
       </div>
-      <div class="status-item">
-        <span class="status-dot status-dot--skipped" />
-        <span class="status-item__label">{{ STATUS_LABELS.skipped }}</span>
-        <span class="status-item__count">{{ monthSkipped.length }}</span>
-        <span class="status-item__value">
+      <div class="flex items-center gap-2.5 px-3 py-2 bg-white/[0.03] rounded-sm">
+        <span class="w-2.5 h-2.5 rounded-full shrink-0 bg-text-muted" />
+        <span class="text-sm font-medium text-text-secondary min-w-[80px]">
+          {{ STATUS_LABELS.skipped }}
+        </span>
+        <span class="text-xs text-text-muted bg-white/[0.06] px-2 py-0.5 rounded-full">
+          {{ monthSkipped.length }}
+        </span>
+        <span class="text-sm font-semibold text-text-secondary ml-auto">
           {{ formatCurrency(monthSkipped.reduce((s, p) => s + p.value, 0)) }}
         </span>
       </div>
@@ -279,12 +344,12 @@ function batchTotal(paymentIds: string[]): number {
   </section>
 
   <!-- ── Recent batches ─────────────────────────────────────────── -->
-  <section v-if="recentBatches.length > 0" class="dashboard-section">
-    <div class="section-header">
-      <h2>Ultimos lotes</h2>
+  <section v-if="recentBatches.length > 0" class="dash-section">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-[0.9375rem] font-semibold !mb-0 !tracking-normal">Ultimos lotes</h2>
       <RouterLink to="/payment-batches" class="btn-link">Ver todos</RouterLink>
     </div>
-    <table>
+    <table class="!mt-0 !border-0 !rounded-none">
       <thead>
         <tr>
           <th>Nome</th>
@@ -306,252 +371,14 @@ function batchTotal(paymentIds: string[]): number {
 </template>
 
 <style scoped>
-.month-label {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: var(--color-text-muted);
+@reference "../assets/main.css";
+
+.dash-card {
+  @apply flex flex-col overflow-hidden bg-surface border border-border rounded-lg p-6 text-center
+         transition-all duration-200 hover:border-border-hover hover:shadow-glow hover:-translate-y-0.5;
 }
 
-/* ── Card overrides ──────────────────────────────────────────── */
-.card-grid {
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-}
-
-.card {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.card h2 {
-  font-size: 1.5rem;
-  word-break: break-word;
-}
-
-.card p {
-  order: -1;
-  margin-bottom: 0.25rem;
-}
-
-.card__detail {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  margin-top: 0.125rem;
-}
-
-.card--balance h2 {
-  color: var(--color-primary);
-}
-
-.card--paid h2 {
-  color: var(--color-success);
-}
-
-.card--pending h2 {
-  color: var(--color-warning);
-}
-
-/* ── Dashboard sections ──────────────────────────────────────── */
-.dashboard-section {
-  margin-top: 1.5rem;
-  padding: 1.25rem;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-}
-
-.dashboard-section h2 {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-}
-
-.dashboard-section--danger {
-  border-color: var(--color-danger);
-  background: var(--color-danger-dim);
-}
-
-.dashboard-section--danger h2 {
-  color: var(--color-danger);
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-}
-
-.section-header h2 {
-  margin-bottom: 0;
-}
-
-/* ── Progress bar ────────────────────────────────────────────── */
-.progress-bar {
-  height: 10px;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 9999px;
-  overflow: hidden;
-}
-
-.progress-bar__fill {
-  height: 100%;
-  background: var(--color-success);
-  border-radius: 9999px;
-  transition: width 0.4s ease;
-}
-
-.progress-bar__labels {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 0.5rem;
-  font-size: 0.8125rem;
-  color: var(--color-text-muted);
-}
-
-/* ── Account list ────────────────────────────────────────────── */
-.account-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.account-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.5rem 0.75rem;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: var(--radius-sm);
-}
-
-.account-item__name {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--color-text-secondary);
-}
-
-.account-item__balance {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--color-success);
-}
-
-.balance--negative {
-  color: var(--color-danger);
-}
-
-/* ── Category breakdown ──────────────────────────────────────── */
-.category-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.625rem;
-}
-
-.category-row {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.category-row__label {
-  min-width: 120px;
-  flex-shrink: 0;
-}
-
-.category-row__bar-wrapper {
-  flex: 1;
-  height: 8px;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 9999px;
-  overflow: hidden;
-}
-
-.category-row__bar {
-  height: 100%;
-  border-radius: 9999px;
-  transition: width 0.4s ease;
-  min-width: 4px;
-}
-
-.category-row__value {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  min-width: 90px;
-  text-align: right;
-}
-
-.category-badge {
-  display: inline-block;
-  padding: 0.125rem 0.5rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #fff;
-}
-
-/* ── Status summary ──────────────────────────────────────────── */
-.status-summary {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.status-item {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  padding: 0.5rem 0.75rem;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: var(--radius-sm);
-}
-
-.status-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.status-dot--pending {
-  background: var(--color-warning);
-}
-
-.status-dot--paid {
-  background: var(--color-success);
-}
-
-.status-dot--skipped {
-  background: var(--color-text-muted);
-}
-
-.status-item__label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--color-text-secondary);
-  min-width: 80px;
-}
-
-.status-item__count {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  background: rgba(255, 255, 255, 0.06);
-  padding: 0.125rem 0.5rem;
-  border-radius: 9999px;
-}
-
-.status-item__value {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  margin-left: auto;
-}
-
-/* ── Tables in dashboard ─────────────────────────────────────── */
-.dashboard-section table {
-  margin-top: 0;
-  border: none;
-  border-radius: 0;
+.dash-section {
+  @apply mt-6 p-5 bg-surface border border-border rounded-lg;
 }
 </style>

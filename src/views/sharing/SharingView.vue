@@ -39,18 +39,18 @@ function handleRemove() {
 </script>
 
 <template>
-  <div class="page-header">
-    <h1>Compartilhar</h1>
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="!mb-0">Compartilhar</h1>
   </div>
 
   <p v-if="store.error" class="error">{{ store.error }}</p>
 
-  <form class="sharing-form" @submit.prevent="handleAdd">
+  <form class="flex gap-2 mb-6" @submit.prevent="handleAdd">
     <input
       v-model="newEmail"
       type="email"
       placeholder="Email para compartilhar"
-      class="input"
+      class="flex-1"
       required
     />
     <button type="submit" class="btn">Adicionar</button>
@@ -82,15 +82,3 @@ function handleRemove() {
     Tem certeza que deseja remover o compartilhamento?
   </ConfirmDialog>
 </template>
-
-<style scoped>
-.sharing-form {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.sharing-form .input {
-  flex: 1;
-}
-</style>

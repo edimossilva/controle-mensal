@@ -43,8 +43,8 @@ function handleDelete() {
 </script>
 
 <template>
-  <div class="page-header">
-    <h1>Contas Bancarias</h1>
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="!mb-0">Contas Bancarias</h1>
     <RouterLink to="/bank-accounts/new" class="btn">Nova Conta</RouterLink>
   </div>
 

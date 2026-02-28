@@ -28,8 +28,8 @@ function handleDelete() {
 </script>
 
 <template>
-  <div class="page-header">
-    <h1>Categorias de Pagamento</h1>
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="!mb-0">Categorias de Pagamento</h1>
     <RouterLink to="/payment-categories/new" class="btn">Nova Categoria</RouterLink>
   </div>
 

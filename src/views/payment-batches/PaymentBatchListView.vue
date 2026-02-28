@@ -19,6 +19,15 @@ const txOriginAccountId = ref('')
 const txDestinationAccountId = ref('')
 const txError = ref<string | null>(null)
 
+const now = new Date()
+const filterYear = ref(now.getFullYear())
+const filterMonth = ref(now.getMonth())
+
+const MONTH_NAMES = [
+  'Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+]
+
 onMounted(() => {
   batchStore.loadAll()
   paymentStore.loadAll()
@@ -43,8 +52,13 @@ function batchTotal(paymentIds: string[]): number {
   return batchPayments(paymentIds).reduce((sum, p) => sum + p.value, 0)
 }
 
-const sortedBatches = computed(() =>
-  [...batchStore.batches].sort((a, b) => b.date.getTime() - a.date.getTime()),
+const filteredBatches = computed(() =>
+  [...batchStore.batches]
+    .filter(
+      (b) =>
+        b.date.getFullYear() === filterYear.value && b.date.getMonth() === filterMonth.value,
+    )
+    .sort((a, b) => b.date.getTime() - a.date.getTime()),
 )
 
 function toggleExpand(id: string) {
@@ -107,22 +121,49 @@ function handleCreateTransaction(batchId: string) {
 </script>
 
 <template>
-  <div class="page-header">
-    <h1>Lotes de Pagamento</h1>
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="!mb-0">Lotes de Pagamento</h1>
+    <div class="flex gap-3 items-center">
+      <div class="flex items-center gap-1.5">
+        <label for="batchMonth" class="!mb-0 text-[0.8125rem] font-medium text-text-muted">Mes</label>
+        <select id="batchMonth" v-model.number="filterMonth" class="!w-auto !py-1 !px-2 text-[0.8125rem]">
+          <option v-for="(name, index) in MONTH_NAMES" :key="index" :value="index">{{ name }}</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <label for="batchYear" class="!mb-0 text-[0.8125rem] font-medium text-text-muted">Ano</label>
+        <select id="batchYear" v-model.number="filterYear" class="!w-auto !py-1 !px-2 text-[0.8125rem]">
+          <option v-for="y in 6" :key="y" :value="now.getFullYear() - 3 + y">
+            {{ now.getFullYear() - 3 + y }}
+          </option>
+        </select>
+      </div>
+    </div>
   </div>
 
   <p v-if="batchStore.error" class="error">{{ batchStore.error }}</p>
 
-  <div v-if="sortedBatches.length" class="batch-list">
-    <div v-for="batch in sortedBatches" :key="batch.id" class="batch-card">
-      <header class="batch-card__header" @click="toggleExpand(batch.id)">
-        <div class="batch-card__title">
-          <h2>{{ batch.name }}</h2>
-          <span class="batch-card__count">{{ batch.paymentIds.length }} pagamento(s)</span>
+  <div v-if="filteredBatches.length" class="flex flex-col gap-4 mt-5">
+    <div
+      v-for="batch in filteredBatches"
+      :key="batch.id"
+      class="bg-surface border border-border rounded-lg overflow-hidden"
+    >
+      <header
+        class="flex items-center justify-between px-5 py-3.5 cursor-pointer select-none transition-colors duration-[120ms] hover:bg-surface-hover"
+        @click="toggleExpand(batch.id)"
+      >
+        <div class="flex items-center gap-2.5">
+          <h2 class="text-[0.9375rem] font-semibold !mb-0 !tracking-normal">{{ batch.name }}</h2>
+          <span class="text-xs font-semibold text-text-muted bg-white/[0.06] px-2 py-0.5 rounded-full">
+            {{ batch.paymentIds.length }} pagamento(s)
+          </span>
         </div>
-        <div class="batch-card__summary">
-          <span class="batch-card__date">{{ formatDate(batch.date) }}</span>
-          <span class="batch-card__total">{{ formatCurrency(batchTotal(batch.paymentIds)) }}</span>
+        <div class="flex items-center gap-3">
+          <span class="text-[0.8125rem] text-text-muted">{{ formatDate(batch.date) }}</span>
+          <span class="text-sm font-semibold text-text-secondary">
+            {{ formatCurrency(batchTotal(batch.paymentIds)) }}
+          </span>
           <button
             type="button"
             class="btn-link"
@@ -138,16 +179,16 @@ function handleCreateTransaction(batchId: string) {
             Excluir
           </button>
           <span
-            class="batch-card__chevron"
-            :class="{ 'chevron--open': expandedBatchId === batch.id }"
+            class="text-xs text-text-muted transition-transform duration-200"
+            :class="expandedBatchId === batch.id ? 'rotate-0' : '-rotate-90'"
           >
             &#9662;
           </span>
         </div>
       </header>
 
-      <div v-show="expandedBatchId === batch.id" class="batch-card__body">
-        <table>
+      <div v-show="expandedBatchId === batch.id">
+        <table class="!mt-0 !border-0 !rounded-none border-t border-t-border">
           <thead>
             <tr>
               <th>Modelo / Nome</th>
@@ -164,19 +205,21 @@ function handleCreateTransaction(batchId: string) {
               <td>{{ payment.status }}</td>
             </tr>
             <tr v-if="batchPayments(batch.paymentIds).length === 0">
-              <td colspan="4" class="empty-row">Nenhum pagamento encontrado</td>
+              <td colspan="4" class="text-center text-text-muted p-4">
+                Nenhum pagamento encontrado
+              </td>
             </tr>
           </tbody>
         </table>
 
-        <div v-if="transactionBatchId === batch.id" class="transaction-form">
-          <h3>Criar transacao a partir do lote</h3>
-          <div class="transaction-form__fields">
-            <div class="form-group">
+        <div v-if="transactionBatchId === batch.id" class="p-4 px-5 border-t border-border bg-bg-subtle">
+          <h3 class="text-sm font-semibold mb-3">Criar transacao a partir do lote</h3>
+          <div class="flex items-end gap-4 flex-wrap">
+            <div class="form-group !mb-0 flex-1 min-w-[140px]">
               <label>Valor</label>
               <input type="text" :value="formatCurrency(batchTotal(batch.paymentIds))" disabled />
             </div>
-            <div class="form-group">
+            <div class="form-group !mb-0 flex-1 min-w-[140px]">
               <label>Conta de origem</label>
               <select v-model="txOriginAccountId" required>
                 <option value="" disabled>Selecione</option>
@@ -189,7 +232,7 @@ function handleCreateTransaction(batchId: string) {
                 </option>
               </select>
             </div>
-            <div class="form-group">
+            <div class="form-group !mb-0 flex-1 min-w-[140px]">
               <label>Conta de destino</label>
               <select v-model="txDestinationAccountId" required>
                 <option value="" disabled>Selecione</option>
@@ -202,7 +245,7 @@ function handleCreateTransaction(batchId: string) {
                 </option>
               </select>
             </div>
-            <div class="transaction-form__actions">
+            <div class="flex gap-2 shrink-0">
               <button type="button" class="btn" @click="handleCreateTransaction(batch.id)">
                 Confirmar
               </button>
@@ -220,136 +263,3 @@ function handleCreateTransaction(batchId: string) {
 
   <ConfirmDialog ref="confirmDialog" @confirm="handleDelete" />
 </template>
-
-<style scoped>
-.batch-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-top: 1.25rem;
-}
-
-.batch-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-}
-
-.batch-card__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.875rem 1.25rem;
-  cursor: pointer;
-  user-select: none;
-  transition: background var(--transition-fast);
-}
-
-.batch-card__header:hover {
-  background: var(--color-surface-hover);
-}
-
-.batch-card__title {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-}
-
-.batch-card__title h2 {
-  font-size: 0.9375rem;
-  font-weight: 600;
-}
-
-.batch-card__count {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  background: rgba(255, 255, 255, 0.06);
-  padding: 0.125rem 0.5rem;
-  border-radius: 9999px;
-}
-
-.batch-card__summary {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.batch-card__date {
-  font-size: 0.8125rem;
-  color: var(--color-text-muted);
-}
-
-.batch-card__total {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-}
-
-.batch-card__chevron {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  transition: transform var(--transition-base);
-  transform: rotate(-90deg);
-}
-
-.chevron--open {
-  transform: rotate(0deg);
-}
-
-.batch-card__body table {
-  margin-top: 0;
-  border: none;
-  border-radius: 0;
-  border-top: 1px solid var(--color-border);
-}
-
-.empty-row {
-  text-align: center;
-  color: var(--color-text-muted);
-  padding: 1rem;
-}
-
-/* ── Transaction form ────────────────────────────────────────── */
-.transaction-form {
-  padding: 1rem 1.25rem;
-  border-top: 1px solid var(--color-border);
-  background: var(--color-bg-subtle);
-}
-
-.transaction-form h3 {
-  font-size: 0.875rem;
-  font-weight: 600;
-  margin-bottom: 0.75rem;
-}
-
-.transaction-form__fields {
-  display: flex;
-  align-items: flex-end;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.transaction-form__fields .form-group {
-  margin-bottom: 0;
-  flex: 1;
-  min-width: 140px;
-}
-
-.transaction-form__actions {
-  display: flex;
-  gap: 0.5rem;
-  flex-shrink: 0;
-}
-
-.btn-secondary {
-  background: var(--color-surface);
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
-}
-
-.btn-secondary:hover {
-  background: var(--color-border);
-}
-</style>

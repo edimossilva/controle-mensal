@@ -100,17 +100,9 @@ function handleSubmit() {
       <label for="date">Data</label>
       <input id="date" v-model="date" type="date" required />
     </div>
-    <div class="form-actions">
+    <div class="flex gap-2 mt-6">
       <button type="submit" class="btn">Salvar</button>
       <RouterLink to="/transactions" class="btn btn-secondary">Cancelar</RouterLink>
     </div>
   </form>
 </template>
-
-<style scoped>
-.form-actions {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 1.5rem;
-}
-</style>

@@ -49,8 +49,8 @@ function handleDelete() {
 </script>
 
 <template>
-  <div class="page-header">
-    <h1>Transacoes</h1>
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="!mb-0">Transacoes</h1>
     <RouterLink to="/transactions/new" class="btn">Nova Transacao</RouterLink>
   </div>
 

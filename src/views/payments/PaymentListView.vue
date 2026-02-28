@@ -298,9 +298,9 @@ function handleCreateBatch() {
 </script>
 
 <template>
-  <div class="page-header">
-    <h1>Pagamentos</h1>
-    <div class="header-actions">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="!mb-0">Pagamentos</h1>
+    <div class="flex gap-2">
       <button type="button" class="btn btn-secondary" @click="showGenerateSection = !showGenerateSection">
         {{ showGenerateSection ? 'Fechar gerador' : 'Gerar a partir dos modelos' }}
       </button>
@@ -308,18 +308,18 @@ function handleCreateBatch() {
     </div>
   </div>
 
-  <div class="filter-bar">
-    <div class="filter-group">
-      <label for="filterMonth">Mes</label>
-      <select id="filterMonth" v-model.number="filterMonth">
+  <div class="flex gap-3 items-end mt-4">
+    <div class="flex items-center gap-1.5">
+      <label for="filterMonth" class="!mb-0 text-[0.8125rem] font-medium text-text-muted">Mes</label>
+      <select id="filterMonth" v-model.number="filterMonth" class="!w-auto !py-1 !px-2 text-[0.8125rem]">
         <option v-for="(name, index) in MONTH_NAMES" :key="index" :value="index">
           {{ name }}
         </option>
       </select>
     </div>
-    <div class="filter-group">
-      <label for="filterYear">Ano</label>
-      <select id="filterYear" v-model.number="filterYear">
+    <div class="flex items-center gap-1.5">
+      <label for="filterYear" class="!mb-0 text-[0.8125rem] font-medium text-text-muted">Ano</label>
+      <select id="filterYear" v-model.number="filterYear" class="!w-auto !py-1 !px-2 text-[0.8125rem]">
         <option v-for="y in 6" :key="y" :value="now.getFullYear() - 3 + y">
           {{ now.getFullYear() - 3 + y }}
         </option>
@@ -328,27 +328,29 @@ function handleCreateBatch() {
     <button
       v-if="filteredPayments.length > 0"
       type="button"
-      class="btn btn-secondary btn-sm"
+      class="btn btn-secondary !py-1 !px-2.5 text-[0.8125rem]"
       @click="showMoveSection = !showMoveSection"
     >
       {{ showMoveSection ? 'Cancelar' : 'Mover todos' }}
     </button>
   </div>
 
-  <section v-if="showMoveSection" class="move-section">
-    <h2>Mover todos os pagamentos de {{ MONTH_NAMES[filterMonth] }} {{ filterYear }}</h2>
-    <div class="move-fields">
-      <div class="filter-group">
-        <label for="moveMonth">Para mes</label>
-        <select id="moveMonth" v-model.number="moveTargetMonth">
+  <section v-if="showMoveSection" class="mt-3 p-4 px-5 bg-surface border border-border rounded-lg">
+    <h2 class="text-[0.9375rem] !mb-3 !tracking-normal">
+      Mover todos os pagamentos de {{ MONTH_NAMES[filterMonth] }} {{ filterYear }}
+    </h2>
+    <div class="flex items-end gap-3 flex-wrap">
+      <div class="flex items-center gap-1.5">
+        <label for="moveMonth" class="!mb-0 text-[0.8125rem] font-medium text-text-muted">Para mes</label>
+        <select id="moveMonth" v-model.number="moveTargetMonth" class="!w-auto !py-1 !px-2 text-[0.8125rem]">
           <option v-for="(name, index) in MONTH_NAMES" :key="index" :value="index">
             {{ name }}
           </option>
         </select>
       </div>
-      <div class="filter-group">
-        <label for="moveYear">Para ano</label>
-        <select id="moveYear" v-model.number="moveTargetYear">
+      <div class="flex items-center gap-1.5">
+        <label for="moveYear" class="!mb-0 text-[0.8125rem] font-medium text-text-muted">Para ano</label>
+        <select id="moveYear" v-model.number="moveTargetYear" class="!w-auto !py-1 !px-2 text-[0.8125rem]">
           <option v-for="y in 6" :key="y" :value="now.getFullYear() - 3 + y">
             {{ now.getFullYear() - 3 + y }}
           </option>
@@ -356,16 +358,16 @@ function handleCreateBatch() {
       </div>
       <button type="button" class="btn" @click="handleMovePayments">Confirmar</button>
     </div>
-    <div v-if="moveResult" class="move-result">
+    <div v-if="moveResult" class="mt-3 px-3 py-2 bg-success-dim text-success rounded-sm text-sm">
       {{ moveResult.moved }} pagamento(s) movido(s).
     </div>
   </section>
 
-  <section v-if="showGenerateSection" class="generate-section">
-    <h2>Gerar pagamentos a partir dos modelos</h2>
-    <form class="generate-form" @submit.prevent="handleGenerate">
-      <div class="generate-fields">
-        <div class="form-group">
+  <section v-if="showGenerateSection" class="mb-6 p-5 bg-surface border border-border rounded-lg">
+    <h2 class="text-base !mb-4 !tracking-normal">Gerar pagamentos a partir dos modelos</h2>
+    <form @submit.prevent="handleGenerate">
+      <div class="flex items-end gap-4 flex-wrap">
+        <div class="form-group !mb-0 flex-1 min-w-[140px]">
           <label for="generateMonth">Mes</label>
           <select id="generateMonth" v-model.number="generateMonth" required>
             <option v-for="(name, index) in MONTH_NAMES" :key="index" :value="index">
@@ -373,7 +375,7 @@ function handleCreateBatch() {
             </option>
           </select>
         </div>
-        <div class="form-group">
+        <div class="form-group !mb-0 flex-1 min-w-[140px]">
           <label for="generateYear">Ano</label>
           <input
             id="generateYear"
@@ -384,7 +386,7 @@ function handleCreateBatch() {
             required
           />
         </div>
-        <div class="form-group">
+        <div class="form-group !mb-0 flex-1 min-w-[140px]">
           <label for="generateAccount">Conta</label>
           <select id="generateAccount" v-model="generateBankAccountId" required>
             <option value="" disabled>Selecione</option>
@@ -397,43 +399,61 @@ function handleCreateBatch() {
             </option>
           </select>
         </div>
-        <button type="submit" class="btn generate-btn">Gerar</button>
+        <button type="submit" class="btn shrink-0 h-[2.4rem]">Gerar</button>
       </div>
     </form>
 
     <p v-if="store.error" class="error">{{ store.error }}</p>
 
-    <div v-if="generateResult" class="generate-result">
+    <div v-if="generateResult" class="mt-3 px-3 py-2 bg-success-dim text-success rounded-sm text-sm">
       {{ generateResult.created }} pagamentos criados, {{ generateResult.skipped }} ja existentes.
     </div>
   </section>
 
-  <div v-if="filteredPayments.length" class="status-groups">
+  <div v-if="filteredPayments.length" class="flex flex-col gap-4 mt-5">
     <section
       v-for="[status, payments] in groupedPayments"
       :key="status"
-      class="status-card"
-      :class="`status-card--${status}`"
+      class="bg-surface border border-border rounded-lg overflow-hidden"
     >
-      <header class="status-card__header" @click="toggleGroup(status)">
-        <div class="status-card__title">
-          <span class="status-card__indicator" :class="`indicator--${status}`" />
-          <h2>{{ STATUS_LABELS[status] }}</h2>
-          <span class="status-card__count">{{ payments.length }}</span>
+      <header
+        class="flex items-center justify-between px-5 py-3.5 cursor-pointer select-none transition-colors duration-[120ms] hover:bg-surface-hover"
+        @click="toggleGroup(status)"
+      >
+        <div class="flex items-center gap-2.5">
+          <span
+            class="w-2.5 h-2.5 rounded-full shrink-0"
+            :class="{
+              'bg-warning': status === 'pending',
+              'bg-success': status === 'paid',
+              'bg-text-muted': status === 'skipped',
+            }"
+          />
+          <h2 class="text-[0.9375rem] font-semibold !mb-0 !tracking-normal">
+            {{ STATUS_LABELS[status] }}
+          </h2>
+          <span class="text-xs font-semibold text-text-muted bg-white/[0.06] px-2 py-0.5 rounded-full">
+            {{ payments.length }}
+          </span>
         </div>
-        <div class="status-card__summary">
-          <span class="status-card__total">{{ formatCurrency(groupTotal(payments)) }}</span>
-          <span class="status-card__chevron" :class="{ 'chevron--open': expandedGroups[status] }">
+        <div class="flex items-center gap-3">
+          <span class="text-sm font-semibold text-text-secondary">
+            {{ formatCurrency(groupTotal(payments)) }}
+          </span>
+          <span
+            class="text-xs text-text-muted transition-transform duration-200"
+            :class="expandedGroups[status] ? 'rotate-0' : '-rotate-90'"
+          >
             &#9662;
           </span>
         </div>
       </header>
 
-      <div v-show="expandedGroups[status]" class="status-card__body">
-        <table>
+      <div v-show="expandedGroups[status]">
+        <table class="!mt-0 !border-0 !rounded-none border-t border-t-border">
           <thead>
             <tr>
-              <th v-if="status === 'pending'" class="col-checkbox">
+              <th v-if="status === 'pending'" class="w-10 text-center">
                 <input
                   type="checkbox"
                   :checked="allPendingSelected"
@@ -454,7 +474,7 @@ function handleCreateBatch() {
           <tbody>
             <tr v-for="payment in payments" :key="payment.id" @keydown.esc="cancelEdit" @keydown.enter="saveEdit">
               <template v-if="editingPaymentId === payment.id">
-                <td v-if="status === 'pending'" class="col-checkbox" />
+                <td v-if="status === 'pending'" class="w-10 text-center" />
                 <td>{{ templateName(payment.templateId) }}</td>
                 <td>
                   <select v-model="editCategoryId" class="inline-input">
@@ -485,7 +505,7 @@ function handleCreateBatch() {
                     type="number"
                     step="0.01"
                     min="0.01"
-                    class="inline-input inline-input--number"
+                    class="inline-input max-w-[100px]"
                   />
                 </td>
                 <td>
@@ -516,7 +536,7 @@ function handleCreateBatch() {
                 </td>
               </template>
               <template v-else>
-                <td v-if="status === 'pending'" class="col-checkbox">
+                <td v-if="status === 'pending'" class="w-10 text-center">
                   <input
                     type="checkbox"
                     :checked="selectedPaymentIds.has(payment.id)"
@@ -526,7 +546,7 @@ function handleCreateBatch() {
                 <td>{{ templateName(payment.templateId) }}</td>
                 <td>
                   <span
-                    class="category-badge"
+                    class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold text-white"
                     :style="{ backgroundColor: categoryColor(payment.categoryId) }"
                   >
                     {{ categoryName(payment.categoryId) }}
@@ -563,26 +583,34 @@ function handleCreateBatch() {
     Nenhum pagamento em {{ MONTH_NAMES[filterMonth] }} {{ filterYear }}.
   </p>
 
-  <div v-if="selectedPaymentIds.size > 0" class="batch-bar">
-    <div class="batch-bar__info">
+  <div
+    v-if="selectedPaymentIds.size > 0"
+    class="sticky bottom-0 bg-surface border border-primary rounded-lg px-5 py-3 mt-4 flex items-center justify-between gap-4 flex-wrap shadow-[0_-2px_12px_rgba(0,0,0,0.15)] z-50"
+  >
+    <div class="text-sm text-text-secondary">
       <strong>{{ selectedPaymentIds.size }}</strong> pagamento(s) selecionado(s)
       &mdash; Total: <strong>{{ formatCurrency(selectedTotal) }}</strong>
     </div>
-    <div v-if="!showBatchForm" class="batch-bar__actions">
+    <div v-if="!showBatchForm" class="flex gap-2">
       <button type="button" class="btn" @click="showBatchForm = true">Criar lote</button>
       <button type="button" class="btn btn-secondary" @click="selectedPaymentIds.clear()">
         Limpar
       </button>
     </div>
-    <form v-else class="batch-form" @submit.prevent="handleCreateBatch">
+    <form v-else class="flex items-center gap-2 flex-wrap" @submit.prevent="handleCreateBatch">
       <input
         v-model="batchName"
         type="text"
         placeholder="Nome do lote"
-        class="batch-form__input"
+        class="!w-auto px-2.5 py-1.5 text-sm border border-border rounded-sm bg-bg text-text"
         required
       />
-      <input v-model="batchDate" type="date" class="batch-form__input" required />
+      <input
+        v-model="batchDate"
+        type="date"
+        class="!w-auto px-2.5 py-1.5 text-sm border border-border rounded-sm bg-bg text-text"
+        required
+      />
       <button type="submit" class="btn">Confirmar</button>
       <button type="button" class="btn btn-secondary" @click="showBatchForm = false">
         Cancelar
@@ -595,289 +623,9 @@ function handleCreateBatch() {
 </template>
 
 <style scoped>
-.filter-bar {
-  display: flex;
-  gap: 0.75rem;
-  margin-top: 1rem;
-}
+@reference "../../assets/main.css";
 
-.filter-group {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-}
-
-.filter-group label {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--color-text-muted);
-}
-
-.filter-group select {
-  padding: 0.3rem 0.5rem;
-  font-size: 0.8125rem;
-}
-
-.btn-sm {
-  padding: 0.3rem 0.625rem;
-  font-size: 0.8125rem;
-  height: auto;
-}
-
-.move-section {
-  margin-top: 0.75rem;
-  padding: 1rem 1.25rem;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-}
-
-.move-section h2 {
-  font-size: 0.9375rem;
-  margin-bottom: 0.75rem;
-}
-
-.move-fields {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.move-result {
-  margin-top: 0.75rem;
-  padding: 0.5rem 0.75rem;
-  background: var(--color-success-dim);
-  color: var(--color-success);
-  border-radius: var(--radius-sm);
-  font-size: 0.875rem;
-}
-
-.header-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.btn-secondary {
-  background: var(--color-surface);
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
-}
-
-.btn-secondary:hover {
-  background: var(--color-border);
-}
-
-.generate-section {
-  margin-bottom: 1.5rem;
-  padding: 1.25rem;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-}
-
-.generate-section h2 {
-  font-size: 1rem;
-  margin-bottom: 1rem;
-}
-
-.generate-fields {
-  display: flex;
-  align-items: flex-end;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.generate-fields .form-group {
-  margin-bottom: 0;
-  flex: 1;
-  min-width: 140px;
-}
-
-.generate-btn {
-  flex-shrink: 0;
-  height: 2.4rem;
-}
-
-.generate-result {
-  margin-top: 0.75rem;
-  padding: 0.5rem 0.75rem;
-  background: var(--color-success-dim);
-  color: var(--color-success);
-  border-radius: var(--radius-sm);
-  font-size: 0.875rem;
-}
-
-/* ── Status groups ───────────────────────────────────────────── */
-.status-groups {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-top: 1.25rem;
-}
-
-.status-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-}
-
-.status-card__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.875rem 1.25rem;
-  cursor: pointer;
-  user-select: none;
-  transition: background var(--transition-fast);
-}
-
-.status-card__header:hover {
-  background: var(--color-surface-hover);
-}
-
-.status-card__title {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-}
-
-.status-card__title h2 {
-  font-size: 0.9375rem;
-  font-weight: 600;
-}
-
-.status-card__indicator {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.indicator--pending {
-  background: var(--color-warning);
-}
-
-.indicator--paid {
-  background: var(--color-success);
-}
-
-.indicator--skipped {
-  background: var(--color-text-muted);
-}
-
-.status-card__count {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  background: rgba(255, 255, 255, 0.06);
-  padding: 0.125rem 0.5rem;
-  border-radius: 9999px;
-}
-
-.status-card__summary {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.status-card__total {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-}
-
-.status-card__chevron {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  transition: transform var(--transition-base);
-  transform: rotate(-90deg);
-}
-
-.chevron--open {
-  transform: rotate(0deg);
-}
-
-.status-card__body table {
-  margin-top: 0;
-  border: none;
-  border-radius: 0;
-  border-top: 1px solid var(--color-border);
-}
-
-.category-badge {
-  display: inline-block;
-  padding: 0.125rem 0.5rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #fff;
-}
-
-/* ── Inline editing ──────────────────────────────────────────── */
 .inline-input {
-  width: 100%;
-  min-width: 80px;
-  padding: 0.25rem 0.375rem;
-  font-size: 0.8125rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-bg);
-  color: var(--color-text);
-}
-
-.inline-input--number {
-  max-width: 100px;
-}
-
-/* ── Checkbox column ─────────────────────────────────────────── */
-.col-checkbox {
-  width: 2.5rem;
-  text-align: center;
-}
-
-/* ── Batch action bar ────────────────────────────────────────── */
-.batch-bar {
-  position: sticky;
-  bottom: 0;
-  background: var(--color-surface);
-  border: 1px solid var(--color-primary);
-  border-radius: var(--radius-lg);
-  padding: 0.75rem 1.25rem;
-  margin-top: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.15);
-  z-index: 50;
-}
-
-.batch-bar__info {
-  font-size: 0.875rem;
-  color: var(--color-text-secondary);
-}
-
-.batch-bar__actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.batch-form {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.batch-form__input {
-  padding: 0.375rem 0.625rem;
-  font-size: 0.875rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-bg);
-  color: var(--color-text);
+  @apply w-full min-w-[80px] px-1.5 py-1 text-[0.8125rem] border border-border rounded-sm bg-bg text-text;
 }
 </style>
