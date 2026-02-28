@@ -2,17 +2,27 @@
 import { computed, onMounted, ref } from 'vue'
 import { usePaymentBatchStore } from '@/stores/payment-batch-store'
 import { usePaymentStore } from '@/stores/payment-store'
+import { useTransactionStore } from '@/stores/transaction-store'
+import { useBankAccountStore } from '@/stores/bank-account-store'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const batchStore = usePaymentBatchStore()
 const paymentStore = usePaymentStore()
+const transactionStore = useTransactionStore()
+const bankAccountStore = useBankAccountStore()
 const confirmDialog = ref<InstanceType<typeof ConfirmDialog>>()
 const pendingDeleteId = ref<string>()
 const expandedBatchId = ref<string | null>(null)
 
+const transactionBatchId = ref<string | null>(null)
+const txOriginAccountId = ref('')
+const txDestinationAccountId = ref('')
+const txError = ref<string | null>(null)
+
 onMounted(() => {
   batchStore.loadAll()
   paymentStore.loadAll()
+  bankAccountStore.loadAll()
 })
 
 function formatCurrency(value: number): string {
@@ -51,6 +61,49 @@ function handleDelete() {
     batchStore.remove(pendingDeleteId.value)
   }
 }
+
+function openTransactionForm(batchId: string) {
+  transactionBatchId.value = batchId
+  txOriginAccountId.value = ''
+  txDestinationAccountId.value = ''
+  txError.value = null
+}
+
+function cancelTransaction() {
+  transactionBatchId.value = null
+}
+
+function handleCreateTransaction(batchId: string) {
+  txError.value = null
+  const batch = batchStore.getById(batchId)
+  if (!batch) return
+
+  if (!txOriginAccountId.value || !txDestinationAccountId.value) {
+    txError.value = 'Selecione as contas de origem e destino.'
+    return
+  }
+  if (txOriginAccountId.value === txDestinationAccountId.value) {
+    txError.value = 'Contas de origem e destino devem ser diferentes.'
+    return
+  }
+
+  const amount = batchTotal(batch.paymentIds)
+  const success = transactionStore.create({
+    name: batch.name,
+    description: `Lote: ${batch.name} (${batch.paymentIds.length} pagamentos)`,
+    amount,
+    originAccountId: txOriginAccountId.value,
+    destinationAccountId: txDestinationAccountId.value,
+    date: batch.date,
+  })
+
+  if (success) {
+    transactionBatchId.value = null
+    bankAccountStore.loadAll()
+  } else {
+    txError.value = transactionStore.error
+  }
+}
 </script>
 
 <template>
@@ -70,6 +123,13 @@ function handleDelete() {
         <div class="batch-card__summary">
           <span class="batch-card__date">{{ formatDate(batch.date) }}</span>
           <span class="batch-card__total">{{ formatCurrency(batchTotal(batch.paymentIds)) }}</span>
+          <button
+            type="button"
+            class="btn-link"
+            @click.stop="openTransactionForm(batch.id)"
+          >
+            Criar transacao
+          </button>
           <button
             type="button"
             class="btn-link danger"
@@ -108,6 +168,51 @@ function handleDelete() {
             </tr>
           </tbody>
         </table>
+
+        <div v-if="transactionBatchId === batch.id" class="transaction-form">
+          <h3>Criar transacao a partir do lote</h3>
+          <div class="transaction-form__fields">
+            <div class="form-group">
+              <label>Valor</label>
+              <input type="text" :value="formatCurrency(batchTotal(batch.paymentIds))" disabled />
+            </div>
+            <div class="form-group">
+              <label>Conta de origem</label>
+              <select v-model="txOriginAccountId" required>
+                <option value="" disabled>Selecione</option>
+                <option
+                  v-for="account in bankAccountStore.accounts"
+                  :key="account.id"
+                  :value="account.id"
+                >
+                  {{ account.name }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Conta de destino</label>
+              <select v-model="txDestinationAccountId" required>
+                <option value="" disabled>Selecione</option>
+                <option
+                  v-for="account in bankAccountStore.accounts"
+                  :key="account.id"
+                  :value="account.id"
+                >
+                  {{ account.name }}
+                </option>
+              </select>
+            </div>
+            <div class="transaction-form__actions">
+              <button type="button" class="btn" @click="handleCreateTransaction(batch.id)">
+                Confirmar
+              </button>
+              <button type="button" class="btn btn-secondary" @click="cancelTransaction">
+                Cancelar
+              </button>
+            </div>
+          </div>
+          <p v-if="txError" class="error">{{ txError }}</p>
+        </div>
       </div>
     </div>
   </div>
@@ -204,5 +309,47 @@ function handleDelete() {
   text-align: center;
   color: var(--color-text-muted);
   padding: 1rem;
+}
+
+/* ── Transaction form ────────────────────────────────────────── */
+.transaction-form {
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-bg-subtle);
+}
+
+.transaction-form h3 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.transaction-form__fields {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.transaction-form__fields .form-group {
+  margin-bottom: 0;
+  flex: 1;
+  min-width: 140px;
+}
+
+.transaction-form__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.btn-secondary {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.btn-secondary:hover {
+  background: var(--color-border);
 }
 </style>

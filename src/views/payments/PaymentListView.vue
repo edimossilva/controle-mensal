@@ -8,7 +8,7 @@ import { usePaymentCategoryStore } from '@/stores/payment-category-store'
 import { usePaymentBatchStore } from '@/stores/payment-batch-store'
 import { useSortable } from '@/composables/use-sortable'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import type { PaymentStatus } from '@/entities/payment'
+import type { Payment, PaymentStatus } from '@/entities/payment'
 
 const store = usePaymentStore()
 const templateStore = usePaymentTemplateStore()
@@ -25,6 +25,14 @@ const showBatchForm = ref(false)
 const batchName = ref('')
 const batchDate = ref(new Date().toISOString().slice(0, 10))
 const batchError = ref<string | null>(null)
+
+const editingPaymentId = ref<string | null>(null)
+const editValue = ref(0)
+const editDate = ref('')
+const editStatus = ref<PaymentStatus>('pending')
+const editCategoryId = ref('')
+const editBankAccountId = ref('')
+const editNotes = ref('')
 
 const now = new Date()
 const generateYear = ref(now.getFullYear())
@@ -147,6 +155,41 @@ function confirmDelete(id: string) {
 function handleDelete() {
   if (pendingDeleteId.value) {
     store.remove(pendingDeleteId.value)
+    bankAccountStore.loadAll()
+  }
+}
+
+function startEdit(payment: Payment) {
+  editingPaymentId.value = payment.id
+  editValue.value = payment.value
+  editDate.value = payment.paymentDate.toISOString().slice(0, 10)
+  editStatus.value = payment.status
+  editCategoryId.value = payment.categoryId
+  editBankAccountId.value = payment.bankAccountId
+  editNotes.value = payment.notes ?? ''
+}
+
+function cancelEdit() {
+  editingPaymentId.value = null
+}
+
+function saveEdit() {
+  if (!editingPaymentId.value) return
+  const existing = store.getById(editingPaymentId.value)
+  if (!existing) return
+
+  store.update({
+    ...existing,
+    value: editValue.value,
+    paymentDate: new Date(editDate.value + 'T00:00:00'),
+    status: editStatus.value,
+    categoryId: editCategoryId.value,
+    bankAccountId: editBankAccountId.value,
+    notes: editNotes.value || undefined,
+  })
+
+  if (!store.error) {
+    editingPaymentId.value = null
     bankAccountStore.loadAll()
   }
 }
@@ -306,45 +349,113 @@ function handleCreateBatch() {
               <th :class="sortClass('account')" @click="sortBy('account')">Conta</th>
               <th :class="sortClass('value')" @click="sortBy('value')">Valor</th>
               <th :class="sortClass('date')" @click="sortBy('date')">Data Pagamento</th>
+              <th :class="sortClass('status')" @click="sortBy('status')">Status</th>
+              <th>Obs.</th>
               <th>Acoes</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="payment in payments" :key="payment.id">
-              <td v-if="status === 'pending'" class="col-checkbox">
-                <input
-                  type="checkbox"
-                  :checked="selectedPaymentIds.has(payment.id)"
-                  @change="togglePaymentSelection(payment.id)"
-                />
-              </td>
-              <td>{{ templateName(payment.templateId) }}</td>
-              <td>
-                <span
-                  class="category-badge"
-                  :style="{ backgroundColor: categoryColor(payment.categoryId) }"
-                >
-                  {{ categoryName(payment.categoryId) }}
-                </span>
-              </td>
-              <td>{{ ownerName(payment.ownerId) }}</td>
-              <td>{{ accountName(payment.bankAccountId) }}</td>
-              <td>{{ formatCurrency(payment.value) }}</td>
-              <td>{{ formatDate(payment.paymentDate) }}</td>
-              <td>
-                <div class="actions">
-                  <RouterLink :to="`/payments/${payment.id}/edit`" class="btn-link">
-                    Editar
-                  </RouterLink>
-                  <button
-                    type="button"
-                    class="btn-link danger"
-                    @click="confirmDelete(payment.id)"
+            <tr v-for="payment in payments" :key="payment.id" @keydown.esc="cancelEdit" @keydown.enter="saveEdit">
+              <template v-if="editingPaymentId === payment.id">
+                <td v-if="status === 'pending'" class="col-checkbox" />
+                <td>{{ templateName(payment.templateId) }}</td>
+                <td>
+                  <select v-model="editCategoryId" class="inline-input">
+                    <option
+                      v-for="cat in categoryStore.categories"
+                      :key="cat.id"
+                      :value="cat.id"
+                    >
+                      {{ cat.name }}
+                    </option>
+                  </select>
+                </td>
+                <td>{{ ownerName(payment.ownerId) }}</td>
+                <td>
+                  <select v-model="editBankAccountId" class="inline-input">
+                    <option
+                      v-for="account in bankAccountStore.accounts"
+                      :key="account.id"
+                      :value="account.id"
+                    >
+                      {{ account.name }}
+                    </option>
+                  </select>
+                </td>
+                <td>
+                  <input
+                    v-model.number="editValue"
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    class="inline-input inline-input--number"
+                  />
+                </td>
+                <td>
+                  <input v-model="editDate" type="date" class="inline-input" />
+                </td>
+                <td>
+                  <select v-model="editStatus" class="inline-input">
+                    <option value="pending">Pendente</option>
+                    <option value="paid">Pago</option>
+                    <option value="skipped">Ignorado</option>
+                  </select>
+                </td>
+                <td>
+                  <input
+                    v-model="editNotes"
+                    type="text"
+                    placeholder="Obs."
+                    class="inline-input"
+                  />
+                </td>
+                <td>
+                  <div class="actions">
+                    <button type="button" class="btn-link" @click="saveEdit">Salvar</button>
+                    <button type="button" class="btn-link danger" @click="cancelEdit">
+                      Cancelar
+                    </button>
+                  </div>
+                </td>
+              </template>
+              <template v-else>
+                <td v-if="status === 'pending'" class="col-checkbox">
+                  <input
+                    type="checkbox"
+                    :checked="selectedPaymentIds.has(payment.id)"
+                    @change="togglePaymentSelection(payment.id)"
+                  />
+                </td>
+                <td>{{ templateName(payment.templateId) }}</td>
+                <td>
+                  <span
+                    class="category-badge"
+                    :style="{ backgroundColor: categoryColor(payment.categoryId) }"
                   >
-                    Excluir
-                  </button>
-                </div>
-              </td>
+                    {{ categoryName(payment.categoryId) }}
+                  </span>
+                </td>
+                <td>{{ ownerName(payment.ownerId) }}</td>
+                <td>{{ accountName(payment.bankAccountId) }}</td>
+                <td>{{ formatCurrency(payment.value) }}</td>
+                <td>{{ formatDate(payment.paymentDate) }}</td>
+                <td>{{ STATUS_LABELS[payment.status] }}</td>
+                <td>{{ payment.notes ?? '—' }}</td>
+                <td>
+                  <div class="actions">
+                    <button type="button" class="btn-link" @click="startEdit(payment)">
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-link danger"
+                      @click="confirmDelete(payment.id)"
+                    >
+                      Excluir
+                    </button>
+                  </div>
+                </td>
+              </template>
             </tr>
           </tbody>
         </table>
@@ -545,6 +656,22 @@ function handleCreateBatch() {
   font-size: 0.75rem;
   font-weight: 600;
   color: #fff;
+}
+
+/* ── Inline editing ──────────────────────────────────────────── */
+.inline-input {
+  width: 100%;
+  min-width: 80px;
+  padding: 0.25rem 0.375rem;
+  font-size: 0.8125rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.inline-input--number {
+  max-width: 100px;
 }
 
 /* ── Checkbox column ─────────────────────────────────────────── */
