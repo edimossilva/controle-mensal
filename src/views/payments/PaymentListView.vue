@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, toRef } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { usePaymentStore } from '@/stores/payment-store'
 import { usePaymentTemplateStore } from '@/stores/payment-template-store'
 import { useBankAccountStore } from '@/stores/bank-account-store'
@@ -35,6 +35,14 @@ const editBankAccountId = ref('')
 const editNotes = ref('')
 
 const now = new Date()
+const filterMonth = ref(now.getMonth())
+const filterYear = ref(now.getFullYear())
+
+const showMoveSection = ref(false)
+const moveTargetMonth = ref(now.getMonth())
+const moveTargetYear = ref(now.getFullYear())
+const moveResult = ref<{ moved: number } | null>(null)
+
 const generateYear = ref(now.getFullYear())
 const generateMonth = ref(now.getMonth())
 const generateBankAccountId = ref('')
@@ -102,7 +110,15 @@ function formatDate(date: Date): string {
   return date.toLocaleDateString('pt-BR')
 }
 
-const { sortedItems, sortBy, sortClass } = useSortable(toRef(store, 'payments'), {
+const filteredPayments = computed(() =>
+  store.payments.filter(
+    (p) =>
+      p.paymentDate.getFullYear() === filterYear.value &&
+      p.paymentDate.getMonth() === filterMonth.value,
+  ),
+)
+
+const { sortedItems, sortBy, sortClass } = useSortable(filteredPayments, {
   template: (p) => templateName(p.templateId).toLowerCase(),
   category: (p) => categoryName(p.categoryId).toLowerCase(),
   owner: (p) => ownerName(p.ownerId).toLowerCase(),
@@ -194,6 +210,34 @@ function saveEdit() {
   }
 }
 
+function handleMovePayments() {
+  moveResult.value = null
+  const payments = filteredPayments.value
+  if (payments.length === 0) return
+
+  let moved = 0
+  for (const payment of payments) {
+    const oldDate = payment.paymentDate
+    const day = oldDate.getDate()
+    const lastDay = new Date(moveTargetYear.value, moveTargetMonth.value + 1, 0).getDate()
+    const newDay = Math.min(day, lastDay)
+    const newDate = new Date(moveTargetYear.value, moveTargetMonth.value, newDay)
+
+    store.update({
+      ...payment,
+      paymentDate: newDate,
+    })
+    if (!store.error) moved++
+  }
+
+  moveResult.value = { moved }
+  store.loadAll()
+  bankAccountStore.loadAll()
+  filterMonth.value = moveTargetMonth.value
+  filterYear.value = moveTargetYear.value
+  showMoveSection.value = false
+}
+
 function togglePaymentSelection(id: string) {
   if (selectedPaymentIds.has(id)) {
     selectedPaymentIds.delete(id)
@@ -264,6 +308,59 @@ function handleCreateBatch() {
     </div>
   </div>
 
+  <div class="filter-bar">
+    <div class="filter-group">
+      <label for="filterMonth">Mes</label>
+      <select id="filterMonth" v-model.number="filterMonth">
+        <option v-for="(name, index) in MONTH_NAMES" :key="index" :value="index">
+          {{ name }}
+        </option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label for="filterYear">Ano</label>
+      <select id="filterYear" v-model.number="filterYear">
+        <option v-for="y in 6" :key="y" :value="now.getFullYear() - 3 + y">
+          {{ now.getFullYear() - 3 + y }}
+        </option>
+      </select>
+    </div>
+    <button
+      v-if="filteredPayments.length > 0"
+      type="button"
+      class="btn btn-secondary btn-sm"
+      @click="showMoveSection = !showMoveSection"
+    >
+      {{ showMoveSection ? 'Cancelar' : 'Mover todos' }}
+    </button>
+  </div>
+
+  <section v-if="showMoveSection" class="move-section">
+    <h2>Mover todos os pagamentos de {{ MONTH_NAMES[filterMonth] }} {{ filterYear }}</h2>
+    <div class="move-fields">
+      <div class="filter-group">
+        <label for="moveMonth">Para mes</label>
+        <select id="moveMonth" v-model.number="moveTargetMonth">
+          <option v-for="(name, index) in MONTH_NAMES" :key="index" :value="index">
+            {{ name }}
+          </option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="moveYear">Para ano</label>
+        <select id="moveYear" v-model.number="moveTargetYear">
+          <option v-for="y in 6" :key="y" :value="now.getFullYear() - 3 + y">
+            {{ now.getFullYear() - 3 + y }}
+          </option>
+        </select>
+      </div>
+      <button type="button" class="btn" @click="handleMovePayments">Confirmar</button>
+    </div>
+    <div v-if="moveResult" class="move-result">
+      {{ moveResult.moved }} pagamento(s) movido(s).
+    </div>
+  </section>
+
   <section v-if="showGenerateSection" class="generate-section">
     <h2>Gerar pagamentos a partir dos modelos</h2>
     <form class="generate-form" @submit.prevent="handleGenerate">
@@ -311,7 +408,7 @@ function handleCreateBatch() {
     </div>
   </section>
 
-  <div v-if="store.payments.length" class="status-groups">
+  <div v-if="filteredPayments.length" class="status-groups">
     <section
       v-for="[status, payments] in groupedPayments"
       :key="status"
@@ -462,7 +559,9 @@ function handleCreateBatch() {
       </div>
     </section>
   </div>
-  <p v-else-if="!store.error">Nenhum pagamento cadastrado.</p>
+  <p v-else-if="!store.error">
+    Nenhum pagamento em {{ MONTH_NAMES[filterMonth] }} {{ filterYear }}.
+  </p>
 
   <div v-if="selectedPaymentIds.size > 0" class="batch-bar">
     <div class="batch-bar__info">
@@ -496,6 +595,64 @@ function handleCreateBatch() {
 </template>
 
 <style scoped>
+.filter-bar {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.filter-group label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.filter-group select {
+  padding: 0.3rem 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.btn-sm {
+  padding: 0.3rem 0.625rem;
+  font-size: 0.8125rem;
+  height: auto;
+}
+
+.move-section {
+  margin-top: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.move-section h2 {
+  font-size: 0.9375rem;
+  margin-bottom: 0.75rem;
+}
+
+.move-fields {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.move-result {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--color-success-dim);
+  color: var(--color-success);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+}
+
 .header-actions {
   display: flex;
   gap: 0.5rem;
