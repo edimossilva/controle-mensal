@@ -22,6 +22,7 @@ async function handleSignOut() {
         <RouterLink to="/payment-categories">Categorias</RouterLink>
         <RouterLink to="/payment-templates">Modelos</RouterLink>
         <RouterLink to="/payments">Pagamentos</RouterLink>
+        <RouterLink v-if="authStore.isDataOwner" to="/sharing">Compartilhar</RouterLink>
       </div>
       <div v-if="authStore.user" class="user-section">
         <img

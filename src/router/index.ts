@@ -109,6 +109,11 @@ const router = createRouter({
       name: 'payment-edit',
       component: () => import('@/views/payments/PaymentFormView.vue'),
     },
+    {
+      path: '/sharing',
+      name: 'sharing',
+      component: () => import('@/views/sharing/SharingView.vue'),
+    },
   ],
 })
 
