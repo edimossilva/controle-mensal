@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { onMounted, ref, toRef } from 'vue'
+import { computed, onMounted, reactive, ref, toRef } from 'vue'
 import { usePaymentStore } from '@/stores/payment-store'
 import { usePaymentTemplateStore } from '@/stores/payment-template-store'
 import { useBankAccountStore } from '@/stores/bank-account-store'
 import { useOwnerStore } from '@/stores/owner-store'
 import { useSortable } from '@/composables/use-sortable'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import type { PaymentStatus } from '@/entities/payment'
 
 const store = usePaymentStore()
 const templateStore = usePaymentTemplateStore()
@@ -36,6 +37,24 @@ const MONTH_NAMES = [
   'Dezembro',
 ]
 
+const STATUS_ORDER: PaymentStatus[] = ['pending', 'skipped', 'paid']
+
+const STATUS_LABELS: Record<PaymentStatus, string> = {
+  pending: 'Pendente',
+  paid: 'Pago',
+  skipped: 'Ignorado',
+}
+
+const expandedGroups = reactive<Record<PaymentStatus, boolean>>({
+  pending: true,
+  skipped: true,
+  paid: false,
+})
+
+function toggleGroup(status: PaymentStatus) {
+  expandedGroups[status] = !expandedGroups[status]
+}
+
 function templateName(templateId: string): string {
   return templateStore.getById(templateId)?.name ?? 'Desconhecido'
 }
@@ -56,16 +75,6 @@ function formatDate(date: Date): string {
   return date.toLocaleDateString('pt-BR')
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  pending: 'Pendente',
-  paid: 'Pago',
-  skipped: 'Ignorado',
-}
-
-function statusLabel(status: string): string {
-  return STATUS_LABELS[status] ?? status
-}
-
 const { sortedItems, sortBy, sortClass } = useSortable(toRef(store, 'payments'), {
   template: (p) => templateName(p.templateId).toLowerCase(),
   owner: (p) => ownerName(p.ownerId).toLowerCase(),
@@ -74,6 +83,21 @@ const { sortedItems, sortBy, sortClass } = useSortable(toRef(store, 'payments'),
   date: (p) => p.paymentDate,
   status: (p) => p.status,
 })
+
+const groupedPayments = computed(() => {
+  const groups = new Map<PaymentStatus, typeof sortedItems.value>()
+  for (const status of STATUS_ORDER) {
+    const items = sortedItems.value.filter((p) => p.status === status)
+    if (items.length > 0) {
+      groups.set(status, items)
+    }
+  }
+  return groups
+})
+
+function groupTotal(payments: typeof sortedItems.value): number {
+  return payments.reduce((sum, p) => sum + p.value, 0)
+}
 
 onMounted(() => {
   store.loadAll()
@@ -165,37 +189,66 @@ function handleDelete() {
     </div>
   </section>
 
-  <table v-if="store.payments.length">
-    <thead>
-      <tr>
-        <th :class="sortClass('template')" @click="sortBy('template')">Modelo</th>
-        <th :class="sortClass('owner')" @click="sortBy('owner')">Titular</th>
-        <th :class="sortClass('account')" @click="sortBy('account')">Conta</th>
-        <th :class="sortClass('value')" @click="sortBy('value')">Valor</th>
-        <th :class="sortClass('date')" @click="sortBy('date')">Data Pagamento</th>
-        <th :class="sortClass('status')" @click="sortBy('status')">Status</th>
-        <th>Acoes</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr v-for="payment in sortedItems" :key="payment.id">
-        <td>{{ templateName(payment.templateId) }}</td>
-        <td>{{ ownerName(payment.ownerId) }}</td>
-        <td>{{ accountName(payment.bankAccountId) }}</td>
-        <td>{{ formatCurrency(payment.value) }}</td>
-        <td>{{ formatDate(payment.paymentDate) }}</td>
-        <td>{{ statusLabel(payment.status) }}</td>
-        <td>
-          <div class="actions">
-            <RouterLink :to="`/payments/${payment.id}/edit`" class="btn-link">Editar</RouterLink>
-            <button type="button" class="btn-link danger" @click="confirmDelete(payment.id)">
-              Excluir
-            </button>
-          </div>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+  <div v-if="store.payments.length" class="status-groups">
+    <section
+      v-for="[status, payments] in groupedPayments"
+      :key="status"
+      class="status-card"
+      :class="`status-card--${status}`"
+    >
+      <header class="status-card__header" @click="toggleGroup(status)">
+        <div class="status-card__title">
+          <span class="status-card__indicator" :class="`indicator--${status}`" />
+          <h2>{{ STATUS_LABELS[status] }}</h2>
+          <span class="status-card__count">{{ payments.length }}</span>
+        </div>
+        <div class="status-card__summary">
+          <span class="status-card__total">{{ formatCurrency(groupTotal(payments)) }}</span>
+          <span class="status-card__chevron" :class="{ 'chevron--open': expandedGroups[status] }">
+            &#9662;
+          </span>
+        </div>
+      </header>
+
+      <div v-show="expandedGroups[status]" class="status-card__body">
+        <table>
+          <thead>
+            <tr>
+              <th :class="sortClass('template')" @click="sortBy('template')">Modelo</th>
+              <th :class="sortClass('owner')" @click="sortBy('owner')">Titular</th>
+              <th :class="sortClass('account')" @click="sortBy('account')">Conta</th>
+              <th :class="sortClass('value')" @click="sortBy('value')">Valor</th>
+              <th :class="sortClass('date')" @click="sortBy('date')">Data Pagamento</th>
+              <th>Acoes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="payment in payments" :key="payment.id">
+              <td>{{ templateName(payment.templateId) }}</td>
+              <td>{{ ownerName(payment.ownerId) }}</td>
+              <td>{{ accountName(payment.bankAccountId) }}</td>
+              <td>{{ formatCurrency(payment.value) }}</td>
+              <td>{{ formatDate(payment.paymentDate) }}</td>
+              <td>
+                <div class="actions">
+                  <RouterLink :to="`/payments/${payment.id}/edit`" class="btn-link">
+                    Editar
+                  </RouterLink>
+                  <button
+                    type="button"
+                    class="btn-link danger"
+                    @click="confirmDelete(payment.id)"
+                  >
+                    Excluir
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
   <p v-else-if="!store.error">Nenhum pagamento cadastrado.</p>
 
   <ConfirmDialog ref="confirmDialog" @confirm="handleDelete" />
@@ -255,5 +308,103 @@ function handleDelete() {
   color: var(--color-success);
   border-radius: var(--radius-sm);
   font-size: 0.875rem;
+}
+
+/* ── Status groups ───────────────────────────────────────────── */
+.status-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.status-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.status-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem 1.25rem;
+  cursor: pointer;
+  user-select: none;
+  transition: background var(--transition-fast);
+}
+
+.status-card__header:hover {
+  background: var(--color-surface-hover);
+}
+
+.status-card__title {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.status-card__title h2 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.status-card__indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.indicator--pending {
+  background: var(--color-warning);
+}
+
+.indicator--paid {
+  background: var(--color-success);
+}
+
+.indicator--skipped {
+  background: var(--color-text-muted);
+}
+
+.status-card__count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+}
+
+.status-card__summary {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.status-card__total {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.status-card__chevron {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  transition: transform var(--transition-base);
+  transform: rotate(-90deg);
+}
+
+.chevron--open {
+  transform: rotate(0deg);
+}
+
+.status-card__body table {
+  margin-top: 0;
+  border: none;
+  border-radius: 0;
+  border-top: 1px solid var(--color-border);
 }
 </style>
