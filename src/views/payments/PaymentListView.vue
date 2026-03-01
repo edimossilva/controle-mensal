@@ -449,7 +449,7 @@ function handleCreateBatch() {
         </div>
       </header>
 
-      <div v-show="expandedGroups[status]">
+      <div v-show="expandedGroups[status]" class="overflow-x-auto">
         <table class="!mt-0 !border-0 !rounded-none border-t border-t-border">
           <thead>
             <tr>
@@ -472,8 +472,8 @@ function handleCreateBatch() {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="payment in payments" :key="payment.id" @keydown.esc="cancelEdit" @keydown.enter="saveEdit">
-              <template v-if="editingPaymentId === payment.id">
+            <template v-for="payment in payments" :key="payment.id">
+              <tr v-if="editingPaymentId === payment.id" @keydown.esc="cancelEdit" @keydown.enter="saveEdit">
                 <td v-if="status === 'pending'" class="w-10 text-center" />
                 <td>{{ templateName(payment.templateId) }}</td>
                 <td>
@@ -526,16 +526,21 @@ function handleCreateBatch() {
                     class="inline-input"
                   />
                 </td>
-                <td>
-                  <div class="actions">
-                    <button type="button" class="btn-link" @click="saveEdit">Salvar</button>
-                    <button type="button" class="btn-link danger" @click="cancelEdit">
+                <td />
+              </tr>
+              <tr v-if="editingPaymentId === payment.id" class="bg-surface!">
+                <td :colspan="status === 'pending' ? 11 : 10" class="py-2! border-b-0!">
+                  <div class="flex items-center gap-2">
+                    <button type="button" class="btn py-1! px-3! text-[0.8125rem]" @click="saveEdit">
+                      Salvar
+                    </button>
+                    <button type="button" class="btn btn-secondary py-1! px-3! text-[0.8125rem]" @click="cancelEdit">
                       Cancelar
                     </button>
                   </div>
                 </td>
-              </template>
-              <template v-else>
+              </tr>
+              <tr v-else>
                 <td v-if="status === 'pending'" class="w-10 text-center">
                   <input
                     type="checkbox"
@@ -572,8 +577,8 @@ function handleCreateBatch() {
                     </button>
                   </div>
                 </td>
-              </template>
-            </tr>
+              </tr>
+            </template>
           </tbody>
         </table>
       </div>
