@@ -6,6 +6,7 @@ import {
   getTransactionRepository,
   getBankAccountRepository,
 } from '@/adapters/repositories/repository-provider'
+import { useNotificationStore } from './notification-store'
 
 function createUseCases() {
   return new TransactionUseCases(getTransactionRepository(), getBankAccountRepository())
@@ -26,21 +27,30 @@ export const useTransactionStore = defineStore('transaction', () => {
   function create(input: CreateTransactionInput): boolean {
     const result = createUseCases().create(input)
     error.value = result.error ?? null
-    if (result.success) loadAll()
+    if (result.success) {
+      loadAll()
+      useNotificationStore().success('Transacao criada com sucesso.')
+    }
     return result.success
   }
 
   function update(transaction: Transaction): boolean {
     const result = createUseCases().update(transaction)
     error.value = result.error ?? null
-    if (result.success) loadAll()
+    if (result.success) {
+      loadAll()
+      useNotificationStore().success('Transacao atualizada com sucesso.')
+    }
     return result.success
   }
 
   function remove(id: string): boolean {
     const result = createUseCases().delete(id)
     error.value = result.error ?? null
-    if (result.success) loadAll()
+    if (result.success) {
+      loadAll()
+      useNotificationStore().success('Transacao excluida com sucesso.')
+    }
     return result.success
   }
 

@@ -6,6 +6,7 @@ import { useBankAccountStore } from '@/stores/bank-account-store'
 import { useOwnerStore } from '@/stores/owner-store'
 import { usePaymentCategoryStore } from '@/stores/payment-category-store'
 import { usePaymentBatchStore } from '@/stores/payment-batch-store'
+import { useTransactionStore } from '@/stores/transaction-store'
 import { useSortable } from '@/composables/use-sortable'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import type { Payment, PaymentStatus } from '@/entities/payment'
@@ -16,6 +17,7 @@ const bankAccountStore = useBankAccountStore()
 const ownerStore = useOwnerStore()
 const categoryStore = usePaymentCategoryStore()
 const batchStore = usePaymentBatchStore()
+const transactionStore = useTransactionStore()
 const confirmDialog = ref<InstanceType<typeof ConfirmDialog>>()
 const pendingDeleteId = ref<string>()
 const showGenerateSection = ref(false)
@@ -25,6 +27,8 @@ const showBatchForm = ref(false)
 const batchName = ref('')
 const batchDate = ref(new Date().toISOString().slice(0, 10))
 const batchError = ref<string | null>(null)
+const txOriginAccountId = ref('')
+const txDestinationAccountId = ref('')
 
 const editingPaymentId = ref<string | null>(null)
 const editValue = ref(0)
@@ -118,15 +122,19 @@ const filteredPayments = computed(() =>
   ),
 )
 
-const { sortedItems, sortBy, sortClass } = useSortable(filteredPayments, {
-  template: (p) => templateName(p.templateId).toLowerCase(),
-  category: (p) => categoryName(p.categoryId).toLowerCase(),
-  owner: (p) => ownerName(p.ownerId).toLowerCase(),
-  account: (p) => accountName(p.bankAccountId).toLowerCase(),
-  value: (p) => p.value,
-  date: (p) => p.paymentDate,
-  status: (p) => p.status,
-})
+const { sortedItems, sortBy, sortClass } = useSortable(
+  filteredPayments,
+  {
+    template: (p) => templateName(p.templateId).toLowerCase(),
+    category: (p) => categoryName(p.categoryId).toLowerCase(),
+    owner: (p) => ownerName(p.ownerId).toLowerCase(),
+    account: (p) => accountName(p.bankAccountId).toLowerCase(),
+    value: (p) => p.value,
+    date: (p) => p.paymentDate,
+    status: (p) => p.status,
+  },
+  { key: 'date' },
+)
 
 const groupedPayments = computed(() => {
   const groups = new Map<PaymentStatus, typeof sortedItems.value>()
@@ -279,21 +287,49 @@ function handleCreateBatch() {
     batchError.value = 'Informe o nome do lote.'
     return
   }
-  const success = batchStore.create({
-    name: batchName.value.trim(),
-    date: new Date(batchDate.value + 'T12:00:00'),
-    paymentIds: [...selectedPaymentIds],
-  })
-  if (success) {
-    selectedPaymentIds.clear()
-    showBatchForm.value = false
-    batchName.value = ''
-    batchDate.value = new Date().toISOString().slice(0, 10)
-    store.loadAll()
-    bankAccountStore.loadAll()
-  } else {
-    batchError.value = batchStore.error
+
+  const wantsTransaction = txOriginAccountId.value && txDestinationAccountId.value
+  if (wantsTransaction && txOriginAccountId.value === txDestinationAccountId.value) {
+    batchError.value = 'Contas de origem e destino devem ser diferentes.'
+    return
   }
+
+  const paymentIds = [...selectedPaymentIds]
+  const batchDateValue = new Date(batchDate.value + 'T12:00:00')
+  const name = batchName.value.trim()
+
+  const success = batchStore.create({ name, date: batchDateValue, paymentIds })
+  if (!success) {
+    batchError.value = batchStore.error
+    return
+  }
+
+  if (wantsTransaction) {
+    const amount = paymentIds.reduce((sum, id) => {
+      const p = store.getById(id)
+      return p ? sum + p.value : sum
+    }, 0)
+    const txSuccess = transactionStore.create({
+      name,
+      description: `Lote: ${name} (${paymentIds.length} pagamentos)`,
+      amount,
+      originAccountId: txOriginAccountId.value,
+      destinationAccountId: txDestinationAccountId.value,
+      date: batchDateValue,
+    })
+    if (!txSuccess) {
+      batchError.value = transactionStore.error
+    }
+  }
+
+  selectedPaymentIds.clear()
+  showBatchForm.value = false
+  batchName.value = ''
+  batchDate.value = new Date().toISOString().slice(0, 10)
+  txOriginAccountId.value = ''
+  txDestinationAccountId.value = ''
+  store.loadAll()
+  bankAccountStore.loadAll()
 }
 </script>
 
@@ -616,6 +652,32 @@ function handleCreateBatch() {
         class="!w-auto px-2.5 py-1.5 text-sm border border-border rounded-sm bg-bg text-text"
         required
       />
+      <select
+        v-model="txOriginAccountId"
+        class="!w-auto px-2.5 py-1.5 text-sm border border-border rounded-sm bg-bg text-text"
+      >
+        <option value="">Conta origem (opcional)</option>
+        <option
+          v-for="account in bankAccountStore.accounts"
+          :key="account.id"
+          :value="account.id"
+        >
+          {{ account.name }}
+        </option>
+      </select>
+      <select
+        v-model="txDestinationAccountId"
+        class="!w-auto px-2.5 py-1.5 text-sm border border-border rounded-sm bg-bg text-text"
+      >
+        <option value="">Conta destino (opcional)</option>
+        <option
+          v-for="account in bankAccountStore.accounts"
+          :key="account.id"
+          :value="account.id"
+        >
+          {{ account.name }}
+        </option>
+      </select>
       <button type="submit" class="btn">Confirmar</button>
       <button type="button" class="btn btn-secondary" @click="showBatchForm = false">
         Cancelar

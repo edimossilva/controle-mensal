@@ -9,6 +9,7 @@ import {
   getOwnerRepository,
   getPaymentCategoryRepository,
 } from '@/adapters/repositories/repository-provider'
+import { useNotificationStore } from './notification-store'
 
 function createUseCases() {
   return new PaymentUseCases(
@@ -35,21 +36,30 @@ export const usePaymentStore = defineStore('payment', () => {
   function create(input: CreatePaymentInput): boolean {
     const result = createUseCases().create(input)
     error.value = result.error ?? null
-    if (result.success) loadAll()
+    if (result.success) {
+      loadAll()
+      useNotificationStore().success('Pagamento criado com sucesso.')
+    }
     return result.success
   }
 
   function update(payment: Payment): boolean {
     const result = createUseCases().update(payment)
     error.value = result.error ?? null
-    if (result.success) loadAll()
+    if (result.success) {
+      loadAll()
+      useNotificationStore().success('Pagamento atualizado com sucesso.')
+    }
     return result.success
   }
 
   function remove(id: string): boolean {
     const result = createUseCases().delete(id)
     error.value = result.error ?? null
-    if (result.success) loadAll()
+    if (result.success) {
+      loadAll()
+      useNotificationStore().success('Pagamento excluido com sucesso.')
+    }
     return result.success
   }
 

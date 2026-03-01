@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import { getFirestoreInstance } from '@/adapters/firebase/firebase-firestore'
 import { FirestoreSharingRepository } from '@/adapters/repositories/firestore-sharing-repository'
 import { useAuthStore } from './auth-store'
+import { useNotificationStore } from './notification-store'
 
 export const useSharingStore = defineStore('sharing', () => {
   const sharedEmails = ref<string[]>([])
@@ -41,6 +42,7 @@ export const useSharingStore = defineStore('sharing', () => {
       const repo = new FirestoreSharingRepository(getFirestoreInstance())
       await repo.addSharedEmail(ownerUid, email)
       sharedEmails.value.push(email)
+      useNotificationStore().success('Email adicionado com sucesso.')
     } catch (e) {
       error.value = 'Erro ao adicionar email.'
       console.error(e)
@@ -56,6 +58,7 @@ export const useSharingStore = defineStore('sharing', () => {
       const repo = new FirestoreSharingRepository(getFirestoreInstance())
       await repo.removeSharedEmail(ownerUid, email)
       sharedEmails.value = sharedEmails.value.filter((e) => e !== email)
+      useNotificationStore().success('Email removido com sucesso.')
     } catch (e) {
       error.value = 'Erro ao remover email.'
       console.error(e)

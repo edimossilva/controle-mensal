@@ -8,6 +8,7 @@ import {
   getPaymentTemplateRepository,
   getPaymentRepository,
 } from '@/adapters/repositories/repository-provider'
+import { useNotificationStore } from './notification-store'
 
 function createUseCases() {
   return new OwnerUseCases(
@@ -33,17 +34,22 @@ export const useOwnerStore = defineStore('owner', () => {
   function create(name: string) {
     createUseCases().create(name)
     loadAll()
+    useNotificationStore().success('Titular criado com sucesso.')
   }
 
   function update(owner: Owner) {
     createUseCases().update(owner)
     loadAll()
+    useNotificationStore().success('Titular atualizado com sucesso.')
   }
 
   function remove(id: string): boolean {
     const result = createUseCases().delete(id)
     error.value = result.error ?? null
-    if (result.success) loadAll()
+    if (result.success) {
+      loadAll()
+      useNotificationStore().success('Titular excluido com sucesso.')
+    }
     return result.success
   }
 

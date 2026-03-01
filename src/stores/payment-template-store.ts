@@ -8,6 +8,7 @@ import {
   getPaymentCategoryRepository,
   getPaymentRepository,
 } from '@/adapters/repositories/repository-provider'
+import { useNotificationStore } from './notification-store'
 
 function createUseCases() {
   return new PaymentTemplateUseCases(
@@ -33,19 +34,26 @@ export const usePaymentTemplateStore = defineStore('payment-template', () => {
   function create(input: CreatePaymentTemplateInput): boolean {
     const result = createUseCases().create(input)
     error.value = result.error ?? null
-    if (result.success) loadAll()
+    if (result.success) {
+      loadAll()
+      useNotificationStore().success('Modelo criado com sucesso.')
+    }
     return result.success
   }
 
   function update(template: PaymentTemplate) {
     createUseCases().update(template)
     loadAll()
+    useNotificationStore().success('Modelo atualizado com sucesso.')
   }
 
   function remove(id: string): boolean {
     const result = createUseCases().delete(id)
     error.value = result.error ?? null
-    if (result.success) loadAll()
+    if (result.success) {
+      loadAll()
+      useNotificationStore().success('Modelo excluido com sucesso.')
+    }
     return result.success
   }
 

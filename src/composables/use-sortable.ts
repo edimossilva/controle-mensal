@@ -2,9 +2,13 @@ import { computed, ref, type Ref } from 'vue'
 
 type ValueGetter<T> = (item: T) => string | number | Date
 
-export function useSortable<T>(items: Ref<T[]>, columns: Record<string, ValueGetter<T>>) {
-  const sortKey = ref<string | null>(null)
-  const sortAsc = ref(true)
+export function useSortable<T>(
+  items: Ref<T[]>,
+  columns: Record<string, ValueGetter<T>>,
+  initialSort?: { key: string; asc?: boolean },
+) {
+  const sortKey = ref<string | null>(initialSort?.key ?? null)
+  const sortAsc = ref(initialSort?.asc ?? true)
 
   function sortBy(key: string) {
     if (sortKey.value === key) {
