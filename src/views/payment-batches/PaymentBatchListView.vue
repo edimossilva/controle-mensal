@@ -155,7 +155,7 @@ function handleCreateTransaction(batchId: string) {
       >
         <div class="flex items-center gap-2.5">
           <h2 class="text-[0.9375rem] font-semibold !mb-0 !tracking-normal">{{ batch.name }}</h2>
-          <span class="text-xs font-semibold text-text-muted bg-white/[0.06] px-2 py-0.5 rounded-full">
+          <span class="text-xs font-semibold text-text-muted bg-black/[0.04] px-2 py-0.5 rounded-full">
             {{ batch.paymentIds.length }} pagamento(s)
           </span>
         </div>

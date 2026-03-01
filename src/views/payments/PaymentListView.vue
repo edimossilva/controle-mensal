@@ -24,6 +24,7 @@ const showGenerateSection = ref(false)
 
 const selectedPaymentIds = reactive(new Set<string>())
 const showBatchForm = ref(false)
+const showAllPayments = ref(false)
 const batchName = ref('')
 const batchDate = ref(new Date().toISOString().slice(0, 10))
 const batchError = ref<string | null>(null)
@@ -468,7 +469,7 @@ function handleCreateBatch() {
           <h2 class="text-[0.9375rem] font-semibold !mb-0 !tracking-normal">
             {{ STATUS_LABELS[status] }}
           </h2>
-          <span class="text-xs font-semibold text-text-muted bg-white/[0.06] px-2 py-0.5 rounded-full">
+          <span class="text-xs font-semibold text-text-muted bg-black/[0.04] px-2 py-0.5 rounded-full">
             {{ payments.length }}
           </span>
         </div>
@@ -624,9 +625,77 @@ function handleCreateBatch() {
     Nenhum pagamento em {{ MONTH_NAMES[filterMonth] }} {{ filterYear }}.
   </p>
 
+  <!-- ── All payments card ──────────────────────────────────────── -->
+  <section
+    v-if="filteredPayments.length"
+    class="bg-surface border border-border rounded-lg overflow-hidden mt-6"
+  >
+    <header
+      class="flex items-center justify-between px-5 py-3.5 cursor-pointer select-none transition-colors duration-[120ms] hover:bg-surface-hover"
+      @click="showAllPayments = !showAllPayments"
+    >
+      <div class="flex items-center gap-2.5">
+        <span class="w-2.5 h-2.5 rounded-full shrink-0 bg-primary" />
+        <h2 class="text-[0.9375rem] font-semibold !mb-0 !tracking-normal">
+          Todos
+        </h2>
+        <span class="text-xs font-semibold text-text-muted bg-black/[0.04] px-2 py-0.5 rounded-full">
+          {{ sortedItems.length }}
+        </span>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-sm font-semibold text-text-secondary">
+          {{ formatCurrency(groupTotal(sortedItems)) }}
+        </span>
+        <span
+          class="text-xs text-text-muted transition-transform duration-200"
+          :class="showAllPayments ? 'rotate-0' : '-rotate-90'"
+        >
+          &#9662;
+        </span>
+      </div>
+    </header>
+
+    <div v-show="showAllPayments" class="overflow-x-auto">
+      <table class="!mt-0 !border-0 !rounded-none border-t border-t-border">
+        <thead>
+          <tr>
+            <th :class="sortClass('template')" @click="sortBy('template')">Modelo</th>
+            <th :class="sortClass('category')" @click="sortBy('category')">Categoria</th>
+            <th :class="sortClass('owner')" @click="sortBy('owner')">Titular</th>
+            <th :class="sortClass('account')" @click="sortBy('account')">Conta</th>
+            <th :class="sortClass('value')" @click="sortBy('value')">Valor</th>
+            <th :class="sortClass('date')" @click="sortBy('date')">Data Pagamento</th>
+            <th :class="sortClass('status')" @click="sortBy('status')">Status</th>
+            <th>Obs.</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="payment in sortedItems" :key="payment.id">
+            <td>{{ templateName(payment.templateId) }}</td>
+            <td>
+              <span
+                class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold text-white"
+                :style="{ backgroundColor: categoryColor(payment.categoryId) }"
+              >
+                {{ categoryName(payment.categoryId) }}
+              </span>
+            </td>
+            <td>{{ ownerName(payment.ownerId) }}</td>
+            <td>{{ accountName(payment.bankAccountId) }}</td>
+            <td>{{ formatCurrency(payment.value) }}</td>
+            <td>{{ formatDate(payment.paymentDate) }}</td>
+            <td>{{ STATUS_LABELS[payment.status] }}</td>
+            <td>{{ payment.notes ?? '—' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
   <div
     v-if="selectedPaymentIds.size > 0"
-    class="sticky bottom-0 bg-surface border border-primary rounded-lg px-5 py-3 mt-4 flex items-center justify-between gap-4 flex-wrap shadow-[0_-2px_12px_rgba(0,0,0,0.15)] z-50"
+    class="sticky bottom-0 bg-surface border border-primary rounded-lg px-5 py-3 mt-4 flex items-center justify-between gap-4 flex-wrap shadow-[0_-2px_12px_rgba(0,0,0,0.06)] z-50"
   >
     <div class="text-sm text-text-secondary">
       <strong>{{ selectedPaymentIds.size }}</strong> pagamento(s) selecionado(s)

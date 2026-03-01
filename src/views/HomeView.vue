@@ -179,7 +179,7 @@ function batchTotal(paymentIds: string[]): number {
   <!-- ── Progress bar ───────────────────────────────────────────── -->
   <section v-if="monthPayments.length > 0" class="dash-section">
     <h2 class="text-[0.9375rem] font-semibold mb-4 !tracking-normal">Progresso do mes</h2>
-    <div class="h-2.5 bg-white/[0.06] rounded-full overflow-hidden">
+    <div class="h-2.5 bg-black/[0.04] rounded-full overflow-hidden">
       <div
         class="h-full bg-success rounded-full transition-[width] duration-[400ms] ease-out"
         :style="{ width: monthProgress + '%' }"
@@ -200,7 +200,7 @@ function batchTotal(paymentIds: string[]): number {
       <div
         v-for="account in bankAccountStore.accounts"
         :key="account.id"
-        class="flex items-center justify-between px-3 py-2 bg-white/[0.03] rounded-sm"
+        class="flex items-center justify-between px-3 py-2 bg-black/[0.03] rounded-sm"
       >
         <span class="text-sm font-medium text-text-secondary">{{ account.name }}</span>
         <span
@@ -284,7 +284,7 @@ function batchTotal(paymentIds: string[]): number {
             {{ cat.name }}
           </span>
         </div>
-        <div class="flex-1 h-2 bg-white/[0.06] rounded-full overflow-hidden">
+        <div class="flex-1 h-2 bg-black/[0.04] rounded-full overflow-hidden">
           <div
             class="h-full rounded-full transition-[width] duration-[400ms] ease-out min-w-1"
             :style="{
@@ -304,36 +304,36 @@ function batchTotal(paymentIds: string[]): number {
   <section v-if="monthPayments.length > 0" class="dash-section">
     <h2 class="text-[0.9375rem] font-semibold mb-4 !tracking-normal">Resumo por status</h2>
     <div class="flex flex-col gap-2">
-      <div class="flex items-center gap-2.5 px-3 py-2 bg-white/[0.03] rounded-sm">
+      <div class="flex items-center gap-2.5 px-3 py-2 bg-black/[0.03] rounded-sm">
         <span class="w-2.5 h-2.5 rounded-full shrink-0 bg-warning" />
         <span class="text-sm font-medium text-text-secondary min-w-[80px]">
           {{ STATUS_LABELS.pending }}
         </span>
-        <span class="text-xs text-text-muted bg-white/[0.06] px-2 py-0.5 rounded-full">
+        <span class="text-xs text-text-muted bg-black/[0.04] px-2 py-0.5 rounded-full">
           {{ monthPending.length }}
         </span>
         <span class="text-sm font-semibold text-text-secondary ml-auto">
           {{ formatCurrency(monthTotalPending) }}
         </span>
       </div>
-      <div class="flex items-center gap-2.5 px-3 py-2 bg-white/[0.03] rounded-sm">
+      <div class="flex items-center gap-2.5 px-3 py-2 bg-black/[0.03] rounded-sm">
         <span class="w-2.5 h-2.5 rounded-full shrink-0 bg-success" />
         <span class="text-sm font-medium text-text-secondary min-w-[80px]">
           {{ STATUS_LABELS.paid }}
         </span>
-        <span class="text-xs text-text-muted bg-white/[0.06] px-2 py-0.5 rounded-full">
+        <span class="text-xs text-text-muted bg-black/[0.04] px-2 py-0.5 rounded-full">
           {{ monthPaid.length }}
         </span>
         <span class="text-sm font-semibold text-text-secondary ml-auto">
           {{ formatCurrency(monthTotalPaid) }}
         </span>
       </div>
-      <div class="flex items-center gap-2.5 px-3 py-2 bg-white/[0.03] rounded-sm">
+      <div class="flex items-center gap-2.5 px-3 py-2 bg-black/[0.03] rounded-sm">
         <span class="w-2.5 h-2.5 rounded-full shrink-0 bg-text-muted" />
         <span class="text-sm font-medium text-text-secondary min-w-[80px]">
           {{ STATUS_LABELS.skipped }}
         </span>
-        <span class="text-xs text-text-muted bg-white/[0.06] px-2 py-0.5 rounded-full">
+        <span class="text-xs text-text-muted bg-black/[0.04] px-2 py-0.5 rounded-full">
           {{ monthSkipped.length }}
         </span>
         <span class="text-sm font-semibold text-text-secondary ml-auto">
