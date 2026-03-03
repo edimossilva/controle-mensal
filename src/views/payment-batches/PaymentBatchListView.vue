@@ -2,12 +2,14 @@
 import { computed, onMounted, ref } from 'vue'
 import { usePaymentBatchStore } from '@/stores/payment-batch-store'
 import { usePaymentStore } from '@/stores/payment-store'
+import { usePaymentTemplateStore } from '@/stores/payment-template-store'
 import { useTransactionStore } from '@/stores/transaction-store'
 import { useBankAccountStore } from '@/stores/bank-account-store'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const batchStore = usePaymentBatchStore()
 const paymentStore = usePaymentStore()
+const templateStore = usePaymentTemplateStore()
 const transactionStore = useTransactionStore()
 const bankAccountStore = useBankAccountStore()
 const confirmDialog = ref<InstanceType<typeof ConfirmDialog>>()
@@ -31,6 +33,7 @@ const MONTH_NAMES = [
 onMounted(() => {
   batchStore.loadAll()
   paymentStore.loadAll()
+  templateStore.loadAll()
   bankAccountStore.loadAll()
 })
 
@@ -191,7 +194,7 @@ function handleCreateTransaction(batchId: string) {
         <table class="!mt-0 !border-0 !rounded-none border-t border-t-border">
           <thead>
             <tr>
-              <th>Modelo / Nome</th>
+              <th>Nome</th>
               <th>Valor</th>
               <th>Data Pagamento</th>
               <th>Status</th>
@@ -199,7 +202,7 @@ function handleCreateTransaction(batchId: string) {
           </thead>
           <tbody>
             <tr v-for="payment in batchPayments(batch.paymentIds)" :key="payment.id">
-              <td>{{ payment.templateId ?? payment.id.slice(0, 8) }}</td>
+              <td>{{ payment.templateId ? (templateStore.getById(payment.templateId)?.name ?? payment.templateId) : payment.id.slice(0, 8) }}</td>
               <td>{{ formatCurrency(payment.value) }}</td>
               <td>{{ formatDate(payment.paymentDate) }}</td>
               <td>{{ payment.status }}</td>
