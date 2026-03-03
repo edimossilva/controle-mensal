@@ -3,6 +3,7 @@ export type PaymentStatus = 'pending' | 'paid' | 'skipped'
 export interface Payment {
   id: string
   templateId?: string
+  name?: string
   paymentDate: Date
   dueDateDay?: number
   value: number
@@ -17,6 +18,7 @@ export interface Payment {
 
 export interface CreatePaymentInput {
   templateId?: string
+  name?: string
   paymentDate: Date
   dueDateDay?: number
   value: number

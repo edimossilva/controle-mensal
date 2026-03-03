@@ -6,7 +6,7 @@ import NotificationToast from '@/components/NotificationToast.vue'
 <template>
   <div class="min-h-screen flex flex-col">
     <AppNav />
-    <main class="max-w-5xl mx-auto px-6 py-8 w-full flex-1">
+    <main class="max-w-7xl mx-auto px-4 py-8 w-full flex-1">
       <RouterView />
     </main>
     <NotificationToast />

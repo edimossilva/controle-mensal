@@ -7,6 +7,7 @@ function serialize(payment: Payment): DocumentData {
   return {
     id: payment.id,
     templateId: payment.templateId ?? null,
+    name: payment.name ?? null,
     paymentDate: Timestamp.fromDate(payment.paymentDate),
     dueDateDay: payment.dueDateDay ?? null,
     value: payment.value,
@@ -24,6 +25,7 @@ function deserialize(data: DocumentData): Payment {
   return {
     id: data.id as string,
     templateId: (data.templateId as string) ?? undefined,
+    name: (data.name as string) ?? undefined,
     paymentDate: (data.paymentDate as Timestamp).toDate(),
     dueDateDay: (data.dueDateDay as number) ?? undefined,
     value: data.value as number,

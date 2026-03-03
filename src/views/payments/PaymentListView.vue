@@ -32,6 +32,7 @@ const txOriginAccountId = ref('')
 const txDestinationAccountId = ref('')
 
 const editingPaymentId = ref<string | null>(null)
+const editName = ref('')
 const editValue = ref(0)
 const editDate = ref('')
 const editStatus = ref<PaymentStatus>('pending')
@@ -186,6 +187,7 @@ function handleDelete() {
 
 function startEdit(payment: Payment) {
   editingPaymentId.value = payment.id
+  editName.value = payment.name ?? ''
   editValue.value = payment.value
   editDate.value = payment.paymentDate.toISOString().slice(0, 10)
   editStatus.value = payment.status
@@ -205,6 +207,7 @@ function saveEdit() {
 
   store.update({
     ...existing,
+    name: editName.value || undefined,
     value: editValue.value,
     paymentDate: new Date(editDate.value + 'T00:00:00'),
     status: editStatus.value,
@@ -498,6 +501,7 @@ function handleCreateBatch() {
                 />
               </th>
               <th :class="sortClass('template')" @click="sortBy('template')">Modelo</th>
+              <th>Nome</th>
               <th :class="sortClass('category')" @click="sortBy('category')">Categoria</th>
               <th :class="sortClass('owner')" @click="sortBy('owner')">Titular</th>
               <th :class="sortClass('account')" @click="sortBy('account')">Conta</th>
@@ -513,6 +517,9 @@ function handleCreateBatch() {
               <tr v-if="editingPaymentId === payment.id" @keydown.esc="cancelEdit" @keydown.enter="saveEdit">
                 <td v-if="status === 'pending'" class="w-10 text-center" />
                 <td>{{ templateName(payment.templateId) }}</td>
+                <td>
+                  <input v-model="editName" type="text" placeholder="Nome" class="inline-input" />
+                </td>
                 <td>
                   <select v-model="editCategoryId" class="inline-input">
                     <option
@@ -566,7 +573,7 @@ function handleCreateBatch() {
                 <td />
               </tr>
               <tr v-if="editingPaymentId === payment.id" class="bg-surface!">
-                <td :colspan="status === 'pending' ? 11 : 10" class="py-2! border-b-0!">
+                <td :colspan="status === 'pending' ? 12 : 11" class="py-2! border-b-0!">
                   <div class="flex items-center gap-2">
                     <button type="button" class="btn py-1! px-3! text-[0.8125rem]" @click="saveEdit">
                       Salvar
@@ -586,6 +593,7 @@ function handleCreateBatch() {
                   />
                 </td>
                 <td>{{ templateName(payment.templateId) }}</td>
+                <td>{{ payment.name ?? '—' }}</td>
                 <td>
                   <span
                     class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold text-white"
@@ -661,6 +669,7 @@ function handleCreateBatch() {
         <thead>
           <tr>
             <th :class="sortClass('template')" @click="sortBy('template')">Modelo</th>
+            <th>Nome</th>
             <th :class="sortClass('category')" @click="sortBy('category')">Categoria</th>
             <th :class="sortClass('owner')" @click="sortBy('owner')">Titular</th>
             <th :class="sortClass('account')" @click="sortBy('account')">Conta</th>
@@ -673,6 +682,7 @@ function handleCreateBatch() {
         <tbody>
           <tr v-for="payment in sortedItems" :key="payment.id">
             <td>{{ templateName(payment.templateId) }}</td>
+            <td>{{ payment.name ?? '—' }}</td>
             <td>
               <span
                 class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold text-white"

@@ -18,6 +18,7 @@ const router = useRouter()
 const { isEditMode, existing } = useEntityForm((id) => store.getById(id))
 
 const templateId = ref('')
+const name = ref('')
 const paymentDate = ref(new Date().toISOString().slice(0, 10))
 const dueDateDay = ref<number | undefined>()
 const value = ref(0)
@@ -47,6 +48,7 @@ watch(templateId, (id) => {
 watch(existing, (entity) => {
   if (entity) {
     templateId.value = entity.templateId ?? ''
+    name.value = entity.name ?? ''
     paymentDate.value = entity.paymentDate.toISOString().slice(0, 10)
     dueDateDay.value = entity.dueDateDay
     value.value = entity.value
@@ -65,6 +67,7 @@ function handleSubmit() {
     store.update({
       ...existing.value,
       templateId: templateId.value || undefined,
+      name: name.value || undefined,
       paymentDate: parsedDate,
       dueDateDay: dueDateDay.value,
       value: value.value,
@@ -77,6 +80,7 @@ function handleSubmit() {
   } else {
     store.create({
       templateId: templateId.value || undefined,
+      name: name.value || undefined,
       paymentDate: parsedDate,
       dueDateDay: dueDateDay.value,
       value: value.value,
@@ -108,6 +112,10 @@ function handleSubmit() {
           {{ t.name }}
         </option>
       </select>
+    </div>
+    <div class="form-group">
+      <label for="name">Nome</label>
+      <input id="name" v-model="name" type="text" />
     </div>
     <div class="form-group">
       <label for="categoryId">Categoria</label>
