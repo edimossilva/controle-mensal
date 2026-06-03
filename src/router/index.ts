@@ -115,6 +115,11 @@ const router = createRouter({
       component: () => import('@/views/payment-batches/PaymentBatchListView.vue'),
     },
     {
+      path: '/payment-charts',
+      name: 'payment-charts',
+      component: () => import('@/views/payment-charts/PaymentChartsView.vue'),
+    },
+    {
       path: '/sharing',
       name: 'sharing',
       component: () => import('@/views/sharing/SharingView.vue'),

@@ -14,55 +14,41 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Format:** `yarn format`
 - **Preview production build:** `yarn preview`
 
-No test framework is configured yet.
+No test framework is configured.
+
+Deployed via Firebase Hosting (`firebase.json` serves `dist/` as an SPA). Firestore security rules live in `firestore.rules`. Firebase config comes from `VITE_FIREBASE_*` env vars (`.env`, not committed).
+
+## What This App Is
+
+A personal monthly-finance tracker (UI text is in **Brazilian Portuguese**). Domain entities: owners (titulares), bank accounts, transactions, payment categories, payment templates (modelos), payments, and payment batches. Data is stored per-user in Firestore under `users/{uid}/{collection}/{docId}`, with Google sign-in via Firebase Auth.
 
 ## Architecture
 
-Vue 3 + TypeScript SPA using **Vite 7**, **Vue Router 5** (history mode), and **Pinia 3** for state management. The `@` path alias resolves to `./src`.
+Vue 3 + TypeScript SPA using **Vite 7**, **Vue Router 5** (history mode), **Pinia 3**, **Tailwind CSS 4** (via `@tailwindcss/vite`), and **Firebase** (Auth + Firestore). The `@` path alias resolves to `./src`.
 
-Follow **Clean Architecture** and **Clean Code** principles. The dependency rule is strict: inner layers never import from outer layers.
+Follow **Clean Architecture**. The dependency rule is strict: inner layers never import from outer layers.
 
 ### Layers (inside → outside)
 
-1. **Entities** (`src/entities/`) — pure TypeScript types, interfaces, and domain models. No framework imports. These represent core business concepts.
-2. **Use Cases** (`src/usecases/`) — application-specific business rules. Pure functions or classes that orchestrate entities. Depend only on entities and port interfaces. No Vue, no Pinia, no HTTP clients.
-3. **Adapters** (`src/adapters/`) — implementations that bridge use cases to the outside world:
-   - `src/adapters/repositories/` — concrete data access (API calls, localStorage). Implement repository interfaces defined in use cases.
-   - `src/adapters/mappers/` — transform between API/external DTOs and domain entities.
-4. **Framework / UI** (outermost) — Vue components, composables, stores, router:
-   - `src/views/` — page-level components tied to routes
-   - `src/components/` — reusable presentational components
-   - `src/composables/` — Vue composables that wire use cases into the reactivity system
-   - `src/stores/` — Pinia stores that hold reactive state and call use cases
-   - `src/router/` — route definitions
+1. **Entities** (`src/entities/`) — pure TypeScript interfaces plus `createX()` factory functions that generate ids with `crypto.randomUUID()`. No framework imports. Re-exported through `src/entities/index.ts`.
+2. **Use Cases** (`src/usecases/`) — classes that take repository ports via constructor injection and enforce business rules (e.g. delete is blocked while dependent records exist, returning `UseCaseResult { success, error }` with a Portuguese error message). Port interfaces live in `src/usecases/ports/`. No Vue, no Pinia, no Firebase.
+3. **Adapters** (`src/adapters/`):
+   - `src/adapters/firebase/` — lazy singletons for the Firebase app, Auth (Google popup sign-in), and Firestore instance.
+   - `src/adapters/repositories/` — Firestore implementations of the port interfaces. Never import Vue or Pinia.
+4. **UI** (outermost) — `src/views/` (page components, one folder per entity with `*ListView` / `*FormView`), `src/components/`, `src/composables/`, `src/stores/`, `src/router/`.
 
-### Dependency rule in practice
+### Data flow & key mechanics
 
-- **Entities** import nothing from the project (only standard TypeScript).
-- **Use Cases** import from `entities/` only. Define port interfaces (e.g., repository contracts) that adapters implement.
-- **Adapters** import from `entities/` and `usecases/` (for port interfaces). Never import Vue or Pinia.
-- **UI layer** (components, composables, stores) may import from all inner layers but inner layers never import from the UI.
-
-### Clean Code principles
-
-- **Single Responsibility:** each file handles one concern.
-- **Small functions:** do one thing. Extract helpers and composables over long procedural blocks.
-- **Meaningful names:** descriptive, intention-revealing. Avoid abbreviations and generic names (`data`, `info`, `temp`).
-- **No magic values:** extract literals into named constants or enums.
-- **Composition over inheritance:** share behavior via composables.
-- **Minimal component API:** props down, events up. Keep interfaces narrow and explicit.
-
-### Key files
-
-- `src/main.ts` — app entry; mounts Vue with Pinia and Router
-- `src/router/index.ts` — route definitions
-- `src/stores/` — Pinia stores (composition/setup style)
-- `src/App.vue` — root component
+- **`FirestoreRepository<T>`** (`src/adapters/repositories/firestore-repository.ts`) is a generic base used by every entity repository. It loads the whole collection into an in-memory `Map` on `initialize()`, then serves all reads synchronously from that cache. Writes update the cache immediately and persist to Firestore **fire-and-forget** (errors only logged). Consequence: use-case and store APIs are synchronous; there are no loading states past login.
+- **Repository provider** (`src/adapters/repositories/repository-provider.ts`) holds module-level singletons. `initializeRepositories(db, userId)` constructs and initializes all repositories after login; `getXRepository()` accessors throw if called before that. Adding an entity means: entity + port + firestore repository (with serialize/deserialize) + registration in the provider + use cases + store + views + routes.
+- **Bootstrap order** (`src/main.ts`): the auth store resolves the initial Firebase auth state (and initializes repositories) **before** the router is installed and the app mounts. A global `beforeEach` redirects unauthenticated users to `/login` (the only route with `meta: { public: true }`).
+- **Stores** are thin Pinia wrappers: they construct use cases on each call via `createUseCases()` (pulling repos from the provider), copy results into `ref`s, and push success/error messages through `notification-store` (rendered by `NotificationToast` in `App.vue`).
+- **Sharing** (`src/views/sharing/SharingView.vue`, `firestore-sharing-repository.ts`): an owner grants access by writing the grantee's email to `users/{uid}/sharedEmails` and a reverse-index doc at `shares/{email}`. On login, the auth store resolves the **effective data owner uid** from `shares/{email}` — a shared user's repositories all point at the owner's data. `authStore.isDataOwner` distinguishes the two; `firestore.rules` enforces this model server-side (shared users cannot touch `sharedEmails`).
 
 ## Code Style
 
-- **Prettier:** no semicolons, single quotes, 100-char print width
-- **Linting** runs OxLint first (with eslint/typescript/unicorn/vue plugins), then ESLint. The ESLint config integrates with OxLint to avoid duplicate rules.
-- Vue components use `<script setup lang="ts">` (Composition API with TypeScript)
-- Pinia stores use the composition/setup style (`defineStore` with a setup function), not the options style
-- 2-space indentation, LF line endings
+- **Prettier:** no semicolons, single quotes, 100-char print width, 2-space indent, LF
+- **Linting:** OxLint runs first, then ESLint (configured to skip rules OxLint covers)
+- Vue components use `<script setup lang="ts">`; Pinia stores use the composition/setup style (`defineStore` with a setup function)
+- File naming: kebab-case for `.ts` files, PascalCase for `.vue` components
+- User-facing strings are in Portuguese

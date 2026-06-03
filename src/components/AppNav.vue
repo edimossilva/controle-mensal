@@ -25,6 +25,7 @@ async function handleSignOut() {
         <RouterLink to="/payment-templates" class="nav-link">Modelos</RouterLink>
         <RouterLink to="/payments" class="nav-link">Pagamentos</RouterLink>
         <RouterLink to="/payment-batches" class="nav-link">Lotes</RouterLink>
+        <RouterLink to="/payment-charts" class="nav-link">Graficos</RouterLink>
         <RouterLink v-if="authStore.isDataOwner" to="/sharing" class="nav-link">
           Compartilhar
         </RouterLink>

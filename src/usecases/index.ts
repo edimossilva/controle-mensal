@@ -6,5 +6,13 @@ export { PaymentTemplateUseCases } from './payment-template-usecases'
 export { PaymentUseCases } from './payment-usecases'
 export { BankAccountHistoryUseCases } from './bank-account-history-usecases'
 export { PaymentBatchUseCases } from './payment-batch-usecases'
+export { PaymentAnalyticsUseCases } from './payment-analytics-usecases'
+export type {
+  PaymentGroupBy,
+  MonthPoint,
+  MonthlyTotal,
+  GroupTotals,
+  GroupedMonthlyTotals,
+} from './payment-analytics-usecases'
 export type { UseCaseResult } from './owner-usecases'
 export * from './ports'
